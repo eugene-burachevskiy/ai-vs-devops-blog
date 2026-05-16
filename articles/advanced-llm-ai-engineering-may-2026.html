@@ -748,6 +748,9 @@
         <h4>Real-World Example</h4>
         <p>LangChain's coding agent jumped from <strong>52.8% to 66.5% on Terminal Bench 2.0</strong> (Top 30 → Top 5) by changing <strong>nothing about the model</strong>—only the harness.</p>
     </div>
+
+    <h3>Learn More</h3>
+    <p>For a structured deep dive into this discipline, check out the open-source <a href="https://github.com/walkinglabs/learn-harness-engineering/tree/main" target="_blank" rel="noopener">Learn Harness Engineering</a> course by WalkingLabs. It covers the full stack: orchestration patterns, tool integration, verification loops, cost controls, and evaluation pipelines with practical code examples.</p>
 </section>
 
 <!-- Section 2: Prompt Caching vs Semantic Caching -->
@@ -803,15 +806,35 @@
     <h3>Prompt Caching (L1)</h3>
     <ul>
         <li><strong>Anthropic</strong>: Explicit <code>cache_control</code> breakpoints. Cache writes cost 25% extra, break-even at 2-3 requests. 90% discount on cached reads.</li>
-        <li><strong>OpenAI</strong>: Automatic prefix detection, no explicit markers.</li>
-        <li><strong>Key design rule</strong>: Stable content at the front, variable content at the end.</li>
+        <li><strong>OpenAI</strong>: Automatic prefix detection for prompts over 1024 tokens. No explicit markers — the API detects and reuses matching prefixes automatically. Cached tokens are discounted ~50%.</li>
+        <li><strong>Google Gemini</strong>: Context caching API — explicitly create a cache resource from content, then reference it in requests. TTL up to 48 hours with periodic access.</li>
+        <li><strong>DeepSeek</strong>: Disk-based prompt caching with automatic prefix reuse. Context cached to NVMe drives and shared across requests.</li>
+        <li><strong>Key design rule</strong>: Stable content at the front (system prompts, tool definitions, long documents), variable content at the end (user input, latest messages).</li>
     </ul>
+    <p><strong>Infrastructure</strong>: No external infrastructure needed — this is a provider-side feature. You just structure your prompts correctly. For maximum reuse, place identical system messages and shared context at the very beginning of every request. In multi-tenant systems, put per-tenant instructions before per-user history. Monitor cache hit rate via provider dashboards (Anthropic shows <code>cache_read_input_tokens</code> in usage, OpenAI includes <code>prompt_tokens_details.cached_tokens</code>).</p>
 
     <h3>Semantic Caching (L2)</h3>
     <ul>
         <li><strong>Production hit rates</strong>: 10-20% for open-ended chat, 40-70% for FAQ/support, 60-85% for structured workflows.</li>
-        <li><strong>Infrastructure</strong>: Redis LangCache, pgvector, Pinecone.</li>
-        <li><strong>Risk</strong>: False positives. Teams monitor cache hit rate + false positive rate separately.</li>
+        <li><strong>Risk</strong>: False positives — semantically similar queries may have different correct answers. Teams monitor cache hit rate + false positive rate separately.</li>
+    </ul>
+    <p><strong>Infrastructure</strong>: Requires a vector database plus an embedding model.</p>
+    <ul>
+        <li><strong>Vector DBs</strong>: <code>pgvector</code> (PostgreSQL extension, zero new infra), <code>Pinecone</code> (managed, serverless), <code>Weaviate</code> (Hybrid search), <code>Qdrant</code> (high-perf Rust, on-prem friendly), <code>Milvus</code> (billion-scale).</li>
+        <li><strong>Libraries</strong>: <code>LangChain CacheBackedEmbeddings</code>, <code>GPTCache</code> (dedicated caching layer with eviction policies), <code>RedisVL</code> (Redis + vector search in one).</li>
+        <li><strong>Pattern</strong>: On every query, compute its embedding (e.g., <code>text-embedding-3-small</code>), search vector DB for nearest neighbors within a cosine similarity threshold (typically 0.85-0.95), return cached response if found. Embeddings are cheap (~$0.02/1M tokens), making this cost-effective even at low hit rates.</li>
+        <li><strong>Eviction strategy</strong>: TTL-based (e.g., 24h for chat, 7d for docs) or LRU with a memory cap. Stale cache is worse than no cache — expired facts poison trust.</li>
+    </ul>
+
+
+    <h3>Response/Edge Caching (L3)</h3>
+    <p>L3 is the simplest and fastest layer — hashing the full request (prompt + model + parameters) and storing the exact response.</p>
+    <ul>
+        <li><strong>Infrastructure</strong>: A key-value store (Redis, Memcached) or a CDN edge layer (Cloudflare Workers KV, Fastly KV Store). The key is typically <code>sha256(model + prompt + temperature + max_tokens)</code>. No embedding model needed, no vector search.</li>
+        <li><strong>Latency</strong>: Sub-10ms on cache hit — orders of magnitude faster than any LLM call.</li>
+        <li><strong>Hit rate</strong>: Low for open-ended generation (every response is unique), medium for RAG with stable documents (same doc + same question = same answer), high for deterministic tasks (classification, extraction with temperature=0).</li>
+        <li><strong>Tradeoff</strong>: The biggest downside is <strong>cache staleness</strong>. When the underlying model is updated (e.g., GPT-4o gets a new checkpoint), all cached responses become stale. Including the model name in the cache key creates a hard version split, which hurts hit rate. Mitigations: per-model cache namespaces, TTL-based invalidation after model updates, or periodic re-sampling of cached responses against a judge model.</li>
+        <li><strong>Best for</strong>: High-traffic endpoints with deterministic behavior — classification, structured extraction with temperature=0, fact-based Q&A over static documents, cost-sensitive internal tooling APIs.</li>
     </ul>
 
     <h3>Real-World Math</h3>
@@ -881,6 +904,11 @@
     </div>
 
     <img src="../images/circuits.jpg" alt="Circuits" class="section-image">
+
+    <h3>What Is the KV Cache?</h3>
+    <p>In transformer models, every token generation step requires attending to <strong>all previous tokens</strong> in the sequence. Naively, this means recomputing the key (K) and value (V) matrices for the entire context on every new token — an O(n²) operation.</p>
+    <p>The KV cache is a simple but critical optimization: after computing K and V for each token once during the <strong>prefill</strong> phase (when the prompt is first ingested), these matrices are stored in GPU memory. During <strong>decoding</strong> (token-by-token generation), only the new token's Q, K, V are computed and appended to the cached K and V, avoiding recomputation of the entire history. This turns generation from O(n²) compute to O(n) memory.</p>
+    <p>Think of it like a search engine that builds an index once and reuses it for every search, instead of scanning all documents from scratch each time. The tradeoff: you trade compute for GPU memory — and at long contexts (100K+ tokens), this memory cost dominates everything else.</p>
 
     <h3>The Problem</h3>
     <p>For Llama 3.1 70B at 131K context, the KV cache alone is <strong>43 GB per request</strong>—bigger than the model weights at FP8. Every modern serving engine (vLLM, SGLang, TensorRT-LLM) revolves around managing it.</p>
