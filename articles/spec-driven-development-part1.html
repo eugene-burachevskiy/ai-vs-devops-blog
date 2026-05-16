@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPEC DRIVEN DEVELOPMENT. Part 1. От Вайб Кодинга к SDD. Kiro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --bg-code: #0d1117;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --border-color: #1e293b;
+            --border-light: #334155;
+            --gradient-1: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+            --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+        .back-btn {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            background: rgba(10,14,26,0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .hero {
+            position: relative;
+            min-height: 45vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(10,14,26,0.8) 0%, rgba(10,14,26,0.95) 100%);
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            padding: 2rem;
+            text-align: center;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--accent-blue);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        .hero h1 {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 1.5rem;
+        }
+        .hero-meta {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        .section {
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border-color);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        .section:last-child { border-bottom: none; }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        h3 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin: 2.5rem 0 1rem;
+            color: var(--text-primary);
+        }
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 2rem 0 0.75rem;
+            color: var(--accent-cyan);
+        }
+        p {
+            margin-bottom: 1.25rem;
+            color: var(--text-secondary);
+        }
+        strong { color: var(--text-primary); font-weight: 600; }
+
+        a { color: var(--accent-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        blockquote {
+            background: var(--bg-card);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: var(--text-primary);
+            position: relative;
+        }
+        blockquote::before {
+            content: '"';
+            font-size: 4rem;
+            color: var(--accent-blue);
+            opacity: 0.2;
+            position: absolute;
+            top: -0.5rem;
+            left: 1rem;
+            font-family: Georgia, serif;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 2rem 0;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        thead { background: var(--bg-secondary); }
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-light);
+            white-space: nowrap;
+        }
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        tbody tr:hover { background: rgba(59,130,246,0.05); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+        pre::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            border-radius: 12px 12px 0 0;
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        pre code { color: #e2e8f0; }
+        :not(pre) > code {
+            background: rgba(59,130,246,0.1);
+            color: var(--accent-cyan);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        ul, ol {
+            margin: 1.5rem 0;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.75rem;
+            color: var(--text-secondary);
+        }
+        li::marker { color: var(--accent-blue); }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .highlight {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+        .highlight pre {
+            margin: 0;
+            border: none;
+        }
+        .highlight pre::before { display: none; }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+        .card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+        .card h4 {
+            margin-top: 0;
+            color: var(--text-primary);
+        }
+        .card p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .checklist li::before {
+            content: '✓';
+            color: var(--accent-green);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(139,92,246,0.1) 100%);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+        }
+        .highlight-box h4 {
+            color: var(--accent-blue);
+            margin-top: 0;
+        }
+
+        .decision-tree {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 2;
+            overflow-x: auto;
+        }
+        .decision-tree .q { color: var(--accent-cyan); font-weight: 600; }
+        .decision-tree .a { color: var(--accent-green); }
+        .decision-tree .arrow { color: var(--text-muted); }
+
+        .footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.5rem; }
+            .card-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<a href="../index.html" class="back-btn">← Back to Blog</a>
+
+<!-- Hero -->
+<header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <div class="hero-badge">AI Development Methodology</div>
+        <h1>SPEC DRIVEN DEVELOPMENT. Part 1. От Вайб Кодинга к SDD. Kiro</h1>
+        <p class="hero-subtitle">Эволюция AI-разработки: от спонтанного кодинга к спецификациям как основе процесса</p>
+        <div class="hero-meta">
+            <span>📅 December 28, 2025</span>
+            <span>🌐 Russian</span>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <p>Вайб кодинг сейчас у всех на слуху. Вплоть до того что этот термин уже обрел мемность. Суть - разрабатываем софт в AI-enabled IDE (Cursor, Windsurf, Claude Code итд). Без планирования, one-shot only, accept everything :))</p>
+<p>И конечно же те самые &ldquo;Make no mistakes!&rdquo; (для новичков) или &ldquo;Fix it or you go to jail!&rdquo; (для про).</p>
+<img src="../images/sdd-1.jpg" width="600" height="339" alt="Auto-generated description: A person wearing headphones and sunglasses is seated at a gaming setup with multiple monitors, surrounded by gaming and tech accessories.">
+<img src="../images/sdd-2.jpg" width="600" height="648" alt="Auto-generated description: A muscular man is focused on working at a desk with multiple monitors, accompanied by a humorous text about building a billion-dollar SaaS.">
+<p>Несмотря на мемы и шутейки, у вайбкодинга есть и плюсы:</p>
+<ol>
+<li>Zero friction. Тебе не надо нервничать над подготовкой и думать с  чего начать. Есть идея - сразу начинаем ее воплощать в код.</li>
+<li>Как следствие быстрый idea-to-code loop. Быстро написали, быстро поправили (то что очевидно), перешли к следующей итерации.</li>
+</ol>
+<p>А теперь минусы для серьезной разработки:</p>
+<ol>
+<li>Контекст живет только в этом одном чате.</li>
+<li>Нужно переобьяснять или суммаризировать для новых сессий.</li>
+<li>Не team-friendly процесс. И нет возможности его повторить достаточно идентично.</li>
+</ol>
+<p>Две основные боли: context state и change management.
+А что если мы перенес нас стейт из чата в репозиторий?</p>
+<p>Так мы переходим от Вайбов к Context rules.
+Контекст рулы - это текстовые файлы для вашей AI IDE, которые живут в вашем репозитории.
+Например .cursor/rules/agents.mdc или AGENTS.md. Они подхватываются в контекст всегда или по заданым условиям. И несут в себе описание работы с вашим конкретным проектом, бест практики для конкретного языка программирования или фреймворка ит.д.</p>
+<img src="../images/sdd-3.png" width="600" height="549" alt="Auto-generated description: A text document contains rules and descriptions for applying them in a project, as well as organized rule folders for different aspects of the project.">
+<p>Плюсы:</p>
+<ol>
+<li>Контекст сохранен в репе. Можно переиспользовать между сессиями и делиться с коллегами.</li>
+<li>Делаем работу более предсказуемой.</li>
+<li>Не надо каждый раз обьяснять нюансы и бест практики именно вашего проекта.</li>
+</ol>
+<p>Но и у такого подхода есть минусы:</p>
+<ol>
+<li>Обновлять и поддерживать приходится вручную.</li>
+<li>Какие то рулы могут становиться неактуальными, легко об этом забыть.</li>
+<li>Для этих рулов нет стандартной структуры и синтаксиса.</li>
+</ol>
+<p>Чтобы исправить эти минусы: лучше структурировать правила, упростить поддержку, отображать эволюцию вашего проекта по мере его разработки возник концепт</p>
+<p>Memory Bank.</p>
+<p>По сути это все еще текстовые рул файлы, но в которые мы (а чаще агент) пишет все что происходит. Требования, задачи, имплементация. Активный контекст агента. Сейчас этот концепт появляется во многих AI IDE (Kilo, Cline, Antigravity+Vertex AI, скоро хотят добавить и в Курсор)</p>
+<img src="../images/sdd-4.jpg" width="600" height="346" alt="Auto-generated description: A flowchart depicts the relationship between files titled projectbrief.md, productContext.md, systemPatterns.md, techContext.md, activeContext.md, and progress.md, showing a hierarchical structure.">
+<p>Итого:</p>
+<ol>
+<li>И контекст и задачи у нас наконец не в чате, а в репозитории.</li>
+<li>Работет с разными IDE и агентами. Стабильно, даже если чат крашнулся.</li>
+<li>Упрощает онбординг и коллаборацию на проекте, все легко шарят общий прогресс проекта.</li>
+</ol>
+<p>Но все еще есть минусы и проблемы:</p>
+<ol>
+<li>Этот процесс не так хорошо скейлится.</li>
+<li>Легко забыть обновить мемори банк своим прогрессом, получаем дрифт.</li>
+<li>Все еще нет унифицированной структуры между разными проектами.</li>
+</ol>
+<p>А что если и context и change management будет частью общего унифицированного workflow?
+Так и появился концепт Spec-Driven Development.</p>
+<p>Как видно на скрине - эта техника сейчас стоит в группе Assess на известном Tech Radar от компании Thoughtworks. То есть эту практику можно смело пробовать.
+Хотя основные постулаты да и сам термин сейчас быстро развивается и меняется.</p>
+<img src="../images/sdd-5.jpg" width="600" height="371" alt="Auto-generated description: A website page features a chart illustrating Spec-driven development surrounded by text describing its concept and applications.">
+<p>Основные принципы:</p>
+<ol>
+<li>Мы создаем полный &ldquo;spec&rdquo; до того как начинаем писать какой либо код.</li>
+<li>Этот спек - source of truth и для разработчиков и для агентов.</li>
+<li>Change Management становится first class project artifacts.</li>
+</ol>
+<p>Процесс разработки проекта или фичи становится повторяемым. Работа со спецификацией хорошо интегрируется в PR-ы, аудиты и архитектурные решения.
+Конечно же это не серебряная пуля, и все еще есть сложности:</p>
+<ol>
+<li>Все еще нужна дисциплина чтобы поддерживать спеки.</li>
+<li>Плохая спецификация -&gt; Плохое решение (известный shit in - shit out принцип :)</li>
+<li>Команда должна согласиться на общий для всех формат спеков.</li>
+</ol>
+<p>И решить эти проблемы призваны специальные тулы (или полноценные IDE), работающие в парадигме SDD.
+Здесь и появляется Kiro. 14 июля 25г. Всеми любимый (или не очень:)) Amazon/AWS выпускается свою AI-powered IDE, в принципе клон VSCode, но с интегрированным Spec Mode.</p>
+<img src="../images/sdd-6.jpg" width="600" height="322" alt="Auto-generated description: Agentic AI development platform interface displaying options for downloading and watching demos, with a focus on task and requirements management.">
+<p>В которой ты с помощью агента создаешь полную спецификацию и implementation plan своего проекта.
+Получаем:</p>
+<ol>
+<li>Memory bank и спецификация по разработке фич в репозитории, но с нативной интеграцией в IDE и ее процессы.</li>
+<li>Системные промпты агентов заточены на этот процесс, общий универсальный формат спецификации.</li>
+<li>Хорошая работа с требованиями, мы можем подключать продукт овнеров для их разработки в понятном им формате. Дальше передавать процесс архитектам для создания и правок дизайна системы/фичи. Дальше разработчики могут давать фидбек по созданым задачам и начинать их имплементировать сразу в Kiro.</li>
+</ol>
+<img src="../images/sdd-7.jpg" width="600" height="314" alt="Auto-generated description: A diagram illustrates a system with three main components: Memory bank, Agent, and Specs, featuring organized documents and code elements, along with a side panel from the Kiro IDE.">
+<p>Вроде идеальное решение, но конечно же Vendor lock-in, и этот весь процесс будет работать только с Kiro. Хотя как мне кажется после написания требований, дизайна системы и списка задач - саму имплементацию каждой задачи можно делать и в любой сторонней IDE, задав ей правила как помечать то что реализовано и как давать фидбек.
+<img src="../images/sdd-8.jpg" width="600" height="315" alt="Kiro interface preview"></p>
+<p>В следующей статье я расскажу про свой опыт с Kiro. С реальной задачей - миграцией довольно крупного AI сервиса (docker compose на 1000+ строк, 40+ сервисов) на kubernetes helm. Как проходит весь процесс изнутри? Насколько прожорлив агент по токенам? Хватит ли бесплатного триала? Выводы и впечатления. А дальше еще будет 1-2 статьи про опенсорсные замены для Kiro.</p>
+<p>_С вас лайк-шер-репост-давите колокольчик :) Подписывайтесь вобщем) <a href="https://t.me/ai_vs_devops">t.me/ai_vs_dev&hellip;</a> _</p>
+
+</main>
+
+<footer class="footer">
+    <p>SPEC DRIVEN DEVELOPMENT. Part 1. От Вайб Кодинга к SDD. Kiro | Originally published on micro.blog</p>
+    <p>Eugene Burachevskiy | AI vs DevOps</p>
+</footer>
+
+</body>
+</html>

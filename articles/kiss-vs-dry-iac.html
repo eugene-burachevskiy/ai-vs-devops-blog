@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KISS vs DRY. Как не переусложнить свою инфраструктуру-как-код?</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --bg-code: #0d1117;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --border-color: #1e293b;
+            --border-light: #334155;
+            --gradient-1: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+            --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+        .back-btn {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            background: rgba(10,14,26,0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .hero {
+            position: relative;
+            min-height: 45vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(10,14,26,0.8) 0%, rgba(10,14,26,0.95) 100%);
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            padding: 2rem;
+            text-align: center;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--accent-blue);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        .hero h1 {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 1.5rem;
+        }
+        .hero-meta {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        .section {
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border-color);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        .section:last-child { border-bottom: none; }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        h3 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin: 2.5rem 0 1rem;
+            color: var(--text-primary);
+        }
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 2rem 0 0.75rem;
+            color: var(--accent-cyan);
+        }
+        p {
+            margin-bottom: 1.25rem;
+            color: var(--text-secondary);
+        }
+        strong { color: var(--text-primary); font-weight: 600; }
+
+        a { color: var(--accent-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        blockquote {
+            background: var(--bg-card);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: var(--text-primary);
+            position: relative;
+        }
+        blockquote::before {
+            content: '"';
+            font-size: 4rem;
+            color: var(--accent-blue);
+            opacity: 0.2;
+            position: absolute;
+            top: -0.5rem;
+            left: 1rem;
+            font-family: Georgia, serif;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 2rem 0;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        thead { background: var(--bg-secondary); }
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-light);
+            white-space: nowrap;
+        }
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        tbody tr:hover { background: rgba(59,130,246,0.05); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+        pre::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            border-radius: 12px 12px 0 0;
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        pre code { color: #e2e8f0; }
+        :not(pre) > code {
+            background: rgba(59,130,246,0.1);
+            color: var(--accent-cyan);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        ul, ol {
+            margin: 1.5rem 0;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.75rem;
+            color: var(--text-secondary);
+        }
+        li::marker { color: var(--accent-blue); }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .highlight {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+        .highlight pre {
+            margin: 0;
+            border: none;
+        }
+        .highlight pre::before { display: none; }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+        .card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+        .card h4 {
+            margin-top: 0;
+            color: var(--text-primary);
+        }
+        .card p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .checklist li::before {
+            content: '✓';
+            color: var(--accent-green);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(139,92,246,0.1) 100%);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+        }
+        .highlight-box h4 {
+            color: var(--accent-blue);
+            margin-top: 0;
+        }
+
+        .decision-tree {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 2;
+            overflow-x: auto;
+        }
+        .decision-tree .q { color: var(--accent-cyan); font-weight: 600; }
+        .decision-tree .a { color: var(--accent-green); }
+        .decision-tree .arrow { color: var(--text-muted); }
+
+        .footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.5rem; }
+            .card-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<a href="../index.html" class="back-btn">← Back to Blog</a>
+
+<!-- Hero -->
+<header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <div class="hero-badge">Infrastructure as Code</div>
+        <h1>KISS vs DRY. Как не переусложнить свою инфраструктуру-как-код?</h1>
+        <p class="hero-subtitle">Практический взгляд на баланс между повторным использованием и простотой в Terraform</p>
+        <div class="hero-meta">
+            <span>📅 January 9, 2026</span>
+            <span>🌐 Russian</span>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <p>Инфраструктура как код - это почти всегда сложный выбор, когда дело доходит до скейлинга. В туториалах все просто - вот создали S3 бакет, вот EC2 машину. Домашние пет проекты тоже могут жить на условном ECS или одной машине с компоузом. Когда же ты погружаешься в реальный крупный бизнес проект сразу появляются вопросы, как организовать код для десятков взаимозависимых сервисов, на трех энвайронментах, в нескольких регионах, а иногда и мультиклауд или легаси он-прем сервисы.</p>
+<p>Когда команды сталкиваются со скейлингом инфраструктуры - перво наперво возникает желание убрать повторения кода. Концепт DRY (Dont Repeat Yourself) пришел из software engineering, и надежно поселился в умах девопсов и системных инженеров. Разнообразные фреймворки для Terraform (такие как Terragrunt, Terraspace, Atmos etc.) предлагают единый менеджмент tf бэкендов, наследование метаданных, генерацию конфигураций  на лету. Сейчас многие команды берут в работу эти инструменты, только потому что это - &ldquo;best practises&rdquo;. И на словах все звучит круто:  &ldquo;Write your infrastructure once, reuse it everywhere, maintain it in one place, and scale effortlessly!&rdquo;.</p>
+<img src="../images/kiss-terragrunt.png" width="600" height="356" alt="terragrunt hierarchy inheritance example">
+<h3 id="но-какова-цена-использования-этих-изящных-инженерных-решений-в-реальном-бизнесе">Но какова цена использования этих &ldquo;изящных инженерных решений&rdquo; в реальном бизнесе?</h3>
+<p>3 часа ночи, и прод упал&hellip; Вам нужно понять, почему Terraform пытается уничтожить и пересоздать вашу базу данных, и вам нужно понять это вот прямо сейчас.</p>
+<p>При использовании DRY-метода с Terragrunt и иерархическим наследованием вы не просто читаете код Terraform. Вы отслеживаете значения на нескольких уровнях: корневой файл terragrunt.hcl с базовыми конфигурациями, переопределения, специфичные для энва. Динамически генерируемые конфигурации бэкенда, абстракции модулей, которые вызывают другие модули. Переменные, каскадно передаваемые по цепочкам наследования.</p>
+<p>Откуда на самом деле взялось это значение конфигурации базы данных? Из глобальной конфигурации? Переопределение именно этого энва? Значение модуля по-умолчанию? Вам приходиться играть в детектива и искать root cause вместо того, чтобы решать проблему. Каждый уровень абстракции добавляет когнитивную нагрузку, когда вы меньше всего можете себе это позволить, во время стрессовых ситуаций в 3 часа ночи.</p>
+<p>Фундаментальная проблема заключается в том, что <strong>DRY-метод оптимизирует написание кода, а не его чтение и понимание под давлением.</strong></p>
+<p>Или на проект приходит новый сотрудник. Даем ему задачу поменять пару рулов в секьюрити группах. Вроде все просто?
+С тулами для DRY абстракций человеку надо не просто знать Terraform, но и изучить ваш tf фреймворк, понять иерархическую структуру конфигураций, как значения наследуются и переопределяются между слоями, и где можно вносить изменения, не нарушив работу других энвов.
+Онбординг превращается в передачу сакральных знаний. Работа, которая должна занимать часы, может занимать дни. Сравните это с тем, когда человек просто открыл структуру директорий и сразу увидел что как и куда деплоится? А это все разница в time-to-prod, выраженная в реальных человекочасах и деньгах.</p>
+<p>Ну и еще один пункт - vendor lock. Ваш код, ваша команда, ваши процессы, пайплайны и документация зависят от одного фреймворка. Когда терраформ добавляет новую фичу - вы просто ждете когда она станет доступна в вашем фреймворке. А смигрировать отсюда к другому подходу становится непосильной задачей.</p>
+<img src="../images/kiss-rotten.jpg" width="600" height="408" alt="Auto-generated description: Buzz Lightyear and Woody from Toy Story are depicted with text saying, THIS IS YOUR INFRASTRUCTURE CODE, IT'S ROTTEN TO THE CORE.">
+<h3 id="есть-ли-альтернатива">Есть ли альтернатива?</h3>
+<p>Есть. И это Бритва Оккама, или Keep It Simple, Stupid (KISS). Или просто не тащить в проект модные фреймворки и &ldquo;бест практики&rdquo;, когда для них нет реальной необходимости! На 90%+ проектов со всеми задачами и скейлингом справится обычный базовый терраформ и пайплайн оркестрация в вашем Github/Gitlab.</p>
+<p>Да, сложность никуда не уходит. Как и факт того что у нас есть разные энвы, регионы, и между ними нужна координация. И вопрос не в том &ldquo;как нам минимизировать сложность&rdquo;, а в том &ldquo;куда нам переместить сложность, чтобы минимизировать значение time to business&rdquo;.</p>
+<p><strong>DRY метод:</strong> сложность в тулах абстракций и наследуемых конфигуарциях.</p>
+<p><strong>KISS метод:</strong> мы используем плоскую структуру кода без цепочек наследуемых конфигураций, а сложность перенесем в CI/CD пайплайны, где все можно удобно мониторить и дебажить.</p>
+<p>Вот пример простой плоской структуры Terraform кода:
+<img src="../images/kiss-flat-tf.png" width="600" height="673" alt="Auto-generated description: A directory tree shows an organized structure of multiple projects such as dev, staging, and prod with subdirectories and various services including vpc, eks, rds, and mwaa, along with a section for us-east-1 in AWS and Azure, indicating infrastructure components."></p>
+<ul>
+<li>Можем разбивать как по сервисам, так и по логическим группам.</li>
+<li>У каждого сервиса свой state файл, isolated blast radius, нет проблем с дебагом огромных стейтов.</li>
+<li>Централизация модулей в одном месте</li>
+<li>Легкая навигация, Just grep it  (c)Nike ✔</li>
+</ul>
+<p>Каждая директория - это отдельный терраформ деплоймент. Открой aws/us-east-1/prod/eks/ и ты увидешь что конкретно задеплоено для EKS в это регионе и этом энве. Без наследований, автогенерации и прочей магии.</p>
+<p>Да, у нас везде повторяется конфгурация бэкендов, например</p>
+<pre tabindex="0"><code># aws/core-infrastructure/prod/backend.tf
+terraform {
+  backend &quot;s3&quot; {
+    bucket         = &quot;myorg-terraform-state-prod&quot;
+    key            = &quot;core-infrastructure/terraform.tfstate&quot;
+    region         = &quot;us-east-1&quot;
+    encrypt        = true
+    dynamodb_table = &quot;terraform-state-lock-prod&quot;
+  }
+}
+</code></pre><p>Адептов DRY такое бесит :) Но я могу сказать, что ты всегда легко видешь в каком бакете лежит стейт этого сервиса, а в какой таблице стоит лок. Тебе не надо понимать логику динамической конфигурации бекенда.
+Стоимость повторения - 100 строк простого YAML-а для 20 энвов. Преимущество — мгновенное устранение неполадок, отсутствие когнитивной нагрузки и полная ясность того, что где находится. 100 строк кода vs 40 часов изучения terragrunt, где лучше ROI?</p>
+<h3 id="а-где-происходит-вся-магия-в-github-actions-пайплайнах">А где происходит вся магия? В Github Actions пайплайнах.</h3>
+<p><strong>Pull Requests:</strong></p>
+<ul>
+<li>Авто-детектим энвайронмент по файловому пути</li>
+<li>Прогоняем terraform plan</li>
+<li>Прогоняем security/complience checks</li>
+<li>Выводим план в PR коменты и блочим мерж в случае падений</li>
+</ul>
+<p><strong>Main Branch:</strong></p>
+<ul>
+<li>авто-детект энва</li>
+<li>terraform apply с ручным апрувалом</li>
+<li>алерты в случае падений</li>
+<li>трекаем configuration drifts и создаем тикеты</li>
+</ul>
+<p><strong>Scheduled:</strong></p>
+<ul>
+<li>Сверяем состояние с кодом и делаем drift detection по всем энвам</li>
+<li>Алерты на непредвиденные состояния</li>
+</ul>
+<p>Мы получаем инфраструктуру, которую просто менеджить и расширять. В команду проще найти специалиста с глубоким знанием CI/CD, чем со знанием конкретного Terraform фреймворка. У команды уходит меньше времени на траблштутинг и больше времени на прямые business-values.</p>
+<h3 id="но-это-же-не-скейлится">Но это же не скейлится?!</h3>
+<p>Скажите, как много вы работали на проектах, с сотнями энвайронментов? На десятки - скейлится вполне, при этом давая изолированные изменения и ограниченный бласт радиус. Часто команды думают про мифический скейл в будущем, но по факту получают излишнюю сложность уже сегодня, не доживая до того времени, когда можно извлечь реальную выгоду от абстракций IaC фреймворков.</p>
+<p><strong>Вам нужен KISS если:</strong></p>
+<ul>
+<li>Количество энвов измеряется единицами или десятками</li>
+<li>Меньше 50 инженеров в команде</li>
+<li>Невысокая change frequency (обычный паттерн - мы подняли инфраструктуру один раз и она не меняется)</li>
+<li>Цена ошибки в инфрастуктурных изменениях очень высока (высоконагруженый прод, регулируемые отрасли бизнеса)</li>
+<li>У нас нет полноценной platform-команды системных инженеров</li>
+</ul>
+<p><strong>Вам нужен DRY если:</strong></p>
+<ul>
+<li>У вас сотни энвайронментов</li>
+<li>У вас полноценная сильная команда platform инженеров, которые шарят в сложных абстракциях, как лось по кукурузе))</li>
+<li>Эта же команда может разрабатывать и поддерживать свои in-house решения поверх базовых tf фреймворков (на это есть люди и деньги)</li>
+<li>Вы строите infrastructure-as-a-product</li>
+</ul>
+<p>Вывод - на новых проектах начинай с простого. Строй постепенно, увеличивай сложность только когда для этого есть реальная необходимость. Думай о business values и не принимай решений, если они обусловлены только &ldquo;инженерной красотой&rdquo; этого решения. При прочих равных, чаще для всех будет выгоднее выбрать &ldquo;Old Boring Technology&rdquo;, вместо &ldquo;New Fancy Silver Bullet&rdquo;.</p>
+<p>И удачи на проектах ;)</p>
+<p><em>Спасибо что дочитали, подписывайтесь на tg канал <a href="https://t.me/ai_vs_devops">https://t.me/ai_vs_devops</a> :) Следующей будет вторая часть статьи про AI-разработку со Spec Driven Development методологией.</em></p>
+
+</main>
+
+<footer class="footer">
+    <p>KISS vs DRY. Как не переусложнить свою инфраструктуру-как-код? | Originally published on micro.blog</p>
+    <p>Eugene Burachevskiy | AI vs DevOps</p>
+</footer>
+
+</body>
+</html>

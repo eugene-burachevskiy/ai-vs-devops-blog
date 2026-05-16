@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Нотификации из Claude Code и OpenCode в ваш Telegram</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --bg-code: #0d1117;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --border-color: #1e293b;
+            --border-light: #334155;
+            --gradient-1: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+            --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+        .back-btn {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            background: rgba(10,14,26,0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .hero {
+            position: relative;
+            min-height: 45vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(10,14,26,0.8) 0%, rgba(10,14,26,0.95) 100%);
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            padding: 2rem;
+            text-align: center;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--accent-blue);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        .hero h1 {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 1.5rem;
+        }
+        .hero-meta {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        .section {
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border-color);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        .section:last-child { border-bottom: none; }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        h3 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin: 2.5rem 0 1rem;
+            color: var(--text-primary);
+        }
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 2rem 0 0.75rem;
+            color: var(--accent-cyan);
+        }
+        p {
+            margin-bottom: 1.25rem;
+            color: var(--text-secondary);
+        }
+        strong { color: var(--text-primary); font-weight: 600; }
+
+        a { color: var(--accent-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        blockquote {
+            background: var(--bg-card);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: var(--text-primary);
+            position: relative;
+        }
+        blockquote::before {
+            content: '"';
+            font-size: 4rem;
+            color: var(--accent-blue);
+            opacity: 0.2;
+            position: absolute;
+            top: -0.5rem;
+            left: 1rem;
+            font-family: Georgia, serif;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 2rem 0;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        thead { background: var(--bg-secondary); }
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-light);
+            white-space: nowrap;
+        }
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        tbody tr:hover { background: rgba(59,130,246,0.05); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+        pre::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            border-radius: 12px 12px 0 0;
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        pre code { color: #e2e8f0; }
+        :not(pre) > code {
+            background: rgba(59,130,246,0.1);
+            color: var(--accent-cyan);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        ul, ol {
+            margin: 1.5rem 0;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.75rem;
+            color: var(--text-secondary);
+        }
+        li::marker { color: var(--accent-blue); }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .highlight {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+        .highlight pre {
+            margin: 0;
+            border: none;
+        }
+        .highlight pre::before { display: none; }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+        .card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+        .card h4 {
+            margin-top: 0;
+            color: var(--text-primary);
+        }
+        .card p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .checklist li::before {
+            content: '✓';
+            color: var(--accent-green);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(139,92,246,0.1) 100%);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+        }
+        .highlight-box h4 {
+            color: var(--accent-blue);
+            margin-top: 0;
+        }
+
+        .decision-tree {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 2;
+            overflow-x: auto;
+        }
+        .decision-tree .q { color: var(--accent-cyan); font-weight: 600; }
+        .decision-tree .a { color: var(--accent-green); }
+        .decision-tree .arrow { color: var(--text-muted); }
+
+        .footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.5rem; }
+            .card-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<a href="../index.html" class="back-btn">← Back to Blog</a>
+
+<!-- Hero -->
+<header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <div class="hero-badge">AI Tools & Automation</div>
+        <h1>Нотификации из Claude Code и OpenCode в ваш Telegram</h1>
+        <p class="hero-subtitle">Как получать уведомления об окончании работы AI-агента прямо в мессенджер</p>
+        <div class="hero-meta">
+            <span>📅 March 3, 2026</span>
+            <span>🌐 Russian</span>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <p>Зачастую в процессе работы с LLM приходится долго ждать ответа. Или модели медленные, или задача сильно большая, или агент очень активно траблшутит проблему и настойчиво пытается ее решить. Идешь пить чай, каждые пару минут возвращаешься за ноут, а работа все еще идет. Удобно было бы получать нотификации, например в телегу, которая всегда под рукой. И реализуется это все с помощью хуков. Недавно сделал себе такое, и в целом доволен, мелочь, а приятно :) Плюс когда даешь задачи на ресерч или брейншторминг, с телефона почитать даже удобнее. Решил поделиться рецептом с вами.</p>
+<p>В Claude Code и Курсоре все просто, хуки бывают двух типов, command и prompt ( на определенное событие запустить шел команду или отправить промпт модели), описываются в hooks.json. Сообщение через бота можно послать просто используя curl. Но мне изначально было интересно сделать нотификацию из OpenCode, и там уже все чуть сложнее. Опенкод не поддерживает обычные хуки, но поддерживает typescript плагины, кастомный код который подгружается вместе с клиентом и может обрабатывать события и по ним запускать нужную логику.</p>
+<p>Но начнем мы с простого бота.</p>
+<p>Идем в телеграм, ищем поиском BotFather, отправляем команду /newbot и создаем нашего нового бота. После создания нам дадут токен в формате &ldquo;айдибота:токен&rdquo;, сохраняем это себе.</p>
+<img src="../images/telegram-botfather.png" width="600" height="505" alt="">
+<p>Дальше или идем в личку боту и просто что нибудь ему пишем. Или создаем новую группу и добавляем в нее нашего бота (кликаем на бота в контактах, дальше more &gt; add to group). Я выбрал второй вариант, так как в планах использовать несколько ботов (каждый привязан к разным ide или к разных машинам) и читать обновления в одной группе.</p>
+<p>Дальше запускаем curl и получаем апдейты с бота,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">curl https://api.telegram.org/bot&lt;BOT_TOKEN&gt;/getUpdates
+</code></pre></div><p>в ответе видим список сообщений который получал бот, там chatId нашего приватного или группового чата, сохраняем.</p>
+<p>Дальше в случае Claude Code все просто, добавляем json с хуками в .claude/settings.json</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+  <span style="color:#f92672">&#34;hooks&#34;</span>: {
+    <span style="color:#f92672">&#34;Stop&#34;</span>: [
+      {
+        <span style="color:#f92672">&#34;hooks&#34;</span>: [
+          {
+            <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;agent&#34;</span>,
+            <span style="color:#f92672">&#34;prompt&#34;</span>: <span style="color:#e6db74">&#34;Check the last result of the session, remember it as a &lt;LAST_MESSAGE&gt; (make sure it is not more then 4000 symbols). And then run in the shell: curl -s -X POST https://api.telegram.org/bot&lt;TOKEN&gt;/sendMessage -H &#34;</span><span style="color:#960050;background-color:#1e0010">Content-Type</span>: <span style="color:#960050;background-color:#1e0010">application/json</span><span style="color:#e6db74">&#34; -d &#39;{&#34;</span><span style="color:#960050;background-color:#1e0010">chat_id</span><span style="color:#e6db74">&#34;: &#34;</span><span style="color:#960050;background-color:#1e0010">&lt;CHAT_ID&gt;</span><span style="color:#e6db74">&#34;, &#34;</span><span style="color:#960050;background-color:#1e0010">text</span><span style="color:#e6db74">&#34;: &#34;</span><span style="color:#960050;background-color:#1e0010">&lt;LAST_MESSAGE&gt;</span><span style="color:#e6db74">&#34;}&#39; &#34;</span>
+          }
+        ]
+      }
+    ],
+    <span style="color:#f92672">&#34;PermissionRequest&#34;</span>: [
+      {
+        <span style="color:#f92672">&#34;hooks&#34;</span>: [
+          {
+            <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;command&#34;</span>,
+            <span style="color:#f92672">&#34;command&#34;</span>: <span style="color:#e6db74">&#34;curl -s -X POST https://api.telegram.org/bot&lt;TOKEN&gt;/sendMessage -H &#34;</span><span style="color:#960050;background-color:#1e0010">Content-Type</span>: <span style="color:#960050;background-color:#1e0010">application/json</span><span style="color:#e6db74">&#34; -d &#39;{&#34;</span><span style="color:#960050;background-color:#1e0010">chat_id</span><span style="color:#e6db74">&#34;: &#34;</span><span style="color:#960050;background-color:#1e0010">&lt;CHAT_ID&gt;</span><span style="color:#e6db74">&#34;, &#34;</span><span style="color:#960050;background-color:#1e0010">text</span><span style="color:#e6db74">&#34;: &#34;</span><span style="color:#960050;background-color:#1e0010">⚠️Permission</span> <span style="color:#960050;background-color:#1e0010">requeired!</span><span style="color:#e6db74">&#34;}&#39;&#34;</span>
+          }          
+        ]
+      }
+    ]
+  }
+}
+</code></pre></div><p>В Cursor все аналогично, можете прочитать про хуки и глянуть примеры в <a href="https://cursor.com/docs/agent/hooks">https://cursor.com/docs/agent/hooks</a>
+Помещаем аналогичный json с событием&gt;хуком в .cursor/hooks.json, если нужно что-то посложнее, например обработку транскрипт файлов, то пишем баш скрипт, кладем в .cursor/hooks/ директорию и вызываем скрипт через command хук.</p>
+<p>В OpenCode же пошли своим путем. На анонсе писали, что добавят что-то покруче&hellip;</p>
+<img src="../images/telegram-opencode.png" width="600" height="250" alt="">
+<p>Но оказалось, что в реализации все не так просто. Вобщем спорно, &ldquo;круче&rdquo; - это когда гениально просто, или когда это сложный навороченый конструктор для гиков?))</p>
+<p>Вобщем надо писать плагины на js/typescript, которые будут обрабатывать события и ходить в API. Кстати только узнал, что в opencode клиент серверная архитектура, твой TUI - это клиент, а еще опенкод поднимает локальный апи сервер, через который TUI или cli, или любой другой клиент может управлять чатами и сессиями.</p>
+<p>Итого пришлось повайбкодить, а еще почитать документацию по плагинам и ивентам:
+<a href="https://opencode.ai/docs/plugins/">https://opencode.ai/docs/plugins/</a>
+и документацию по апи опенкода:
+<a href="https://opencode.ai/docs/server/#apis">https://opencode.ai/docs/server/#apis</a></p>
+<p>Потому что свайбкодить все за один присест не получилось, модель писала какую-то нерабочую фигню, пришлось подсказывать ей какие апи использовать, какие респонсы мы ожидаем итд. :D</p>
+<p>В итоге получился такой код. Сохраняем тг токен и айди чата в ~/.bashrc в переменных OP_TELEGRAM_TOKEN и OP_TELEGRAM_CHAT_ID, чтобы хранить их секьюрно.</p>
+<p>Скрипт работает в фоне и следит за ивентами, на ивенте session.idle (когда аи вам ответила в чате и ждет новых команд) забираем номер сессии, по номеру сессии забераем последний мессейдж агента. По факту там лежит все, и рассуждения, и вызовы тулов, разбираем этот лист и достаем только финальный реплай. Если размер больше 4к символов - транкейтим, чтобы влезло в сообщение телеграм (с этим есть какой-то нюанс, мне кажется с транкейтом не совсем корреткно работало, надо потестить больше :)). И дальше отсылаем в тг апи через обычный fetch.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-typescript" data-lang="typescript"><span style="color:#75715e">/**
+ * TelegramNotifyPlugin for OpenCode
+ * 
+ * Sends Telegram notifications with the final agent response when sessions complete.
+ * Uses OpenCode API: GET /session/:id/message/:messageID
+ */</span>
+
+<span style="color:#66d9ef">const</span> <span style="color:#a6e22e">MIN_TEXT_LENGTH</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">10</span>;
+<span style="color:#66d9ef">const</span> <span style="color:#a6e22e">TELEGRAM_MAX_LENGTH</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">4096</span>;
+<span style="color:#66d9ef">const</span> <span style="color:#a6e22e">TELEGRAM_TIMEOUT_MS</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">5000</span>;
+
+<span style="color:#66d9ef">const</span> <span style="color:#a6e22e">pendingOperations</span>: <span style="color:#66d9ef">Promise</span>&lt;<span style="color:#f92672">void</span>&gt;[] <span style="color:#f92672">=</span> [];
+
+<span style="color:#66d9ef">function</span> <span style="color:#a6e22e">addPendingOperation</span>(<span style="color:#a6e22e">promise</span>: <span style="color:#66d9ef">Promise</span>&lt;<span style="color:#f92672">void</span>&gt;)<span style="color:#f92672">:</span> <span style="color:#66d9ef">void</span> {
+  <span style="color:#a6e22e">pendingOperations</span>.<span style="color:#a6e22e">push</span>(<span style="color:#a6e22e">promise</span>);
+  <span style="color:#a6e22e">promise</span>.<span style="color:#a6e22e">then</span>(() <span style="color:#f92672">=&gt;</span> {
+    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">idx</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">pendingOperations</span>.<span style="color:#a6e22e">indexOf</span>(<span style="color:#a6e22e">promise</span>);
+    <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">idx</span> <span style="color:#f92672">&gt;</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) <span style="color:#a6e22e">pendingOperations</span>.<span style="color:#a6e22e">splice</span>(<span style="color:#a6e22e">idx</span>, <span style="color:#ae81ff">1</span>);
+  });
+}
+
+<span style="color:#a6e22e">process</span>.<span style="color:#a6e22e">on</span>(<span style="color:#e6db74">&#39;beforeExit&#39;</span>, <span style="color:#66d9ef">async</span> () <span style="color:#f92672">=&gt;</span> {
+  <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">pendingOperations</span>.<span style="color:#a6e22e">length</span> <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>) {
+    <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">Promise</span>.<span style="color:#a6e22e">all</span>(<span style="color:#a6e22e">pendingOperations</span>);
+  }
+});
+
+<span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">OpenCodeClient</span> {
+  <span style="color:#a6e22e">_client</span><span style="color:#f92672">:</span> {
+    <span style="color:#a6e22e">request</span><span style="color:#f92672">:</span> (<span style="color:#a6e22e">config</span><span style="color:#f92672">:</span> { <span style="color:#a6e22e">method</span>: <span style="color:#66d9ef">string</span>; <span style="color:#a6e22e">url</span>: <span style="color:#66d9ef">string</span> }) <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">Promise</span><span style="color:#f92672">&lt;</span>{ <span style="color:#a6e22e">data</span>: <span style="color:#66d9ef">MessageListResponse</span> }<span style="color:#f92672">&gt;</span>;
+  };
+}
+
+<span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">MessageListResponse</span> {
+  <span style="color:#a6e22e">info</span><span style="color:#f92672">?:</span> { <span style="color:#a6e22e">id</span>: <span style="color:#66d9ef">string</span> };
+}
+
+<span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">MessagePart</span> {
+  <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span>;
+  <span style="color:#a6e22e">text?</span>: <span style="color:#66d9ef">string</span>;
+}
+
+<span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">MessageDetailResponse</span> {
+  <span style="color:#a6e22e">parts?</span>: <span style="color:#66d9ef">MessagePart</span>[];
+}
+
+<span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">SessionIdleEvent</span> {
+  <span style="color:#66d9ef">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;session.idle&#34;</span>;
+  <span style="color:#a6e22e">properties</span><span style="color:#f92672">?:</span> { <span style="color:#a6e22e">sessionID</span>: <span style="color:#66d9ef">string</span> };
+}
+
+<span style="color:#66d9ef">function</span> <span style="color:#a6e22e">escapeTelegramMarkdown</span>(<span style="color:#a6e22e">text</span>: <span style="color:#66d9ef">string</span>)<span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span> {
+  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">text</span>
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/\\/g</span>, <span style="color:#e6db74">&#39;\\\\&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/_/g</span>, <span style="color:#e6db74">&#39;\\_&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/\*/g</span>, <span style="color:#e6db74">&#39;\\*&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/`/g</span>, <span style="color:#e6db74">&#39;\\`&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/\[/g</span>, <span style="color:#e6db74">&#39;\\[&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/\]/g</span>, <span style="color:#e6db74">&#39;\\]&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/\(/g</span>, <span style="color:#e6db74">&#39;\\(&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/\)/g</span>, <span style="color:#e6db74">&#39;\\)&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/~/g</span>, <span style="color:#e6db74">&#39;\\~&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/&gt;/g</span>, <span style="color:#e6db74">&#39;\\&gt;&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/#/g</span>, <span style="color:#e6db74">&#39;\\#&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/\+/g</span>, <span style="color:#e6db74">&#39;\\+&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/-/g</span>, <span style="color:#e6db74">&#39;\\-&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/=/g</span>, <span style="color:#e6db74">&#39;\\=&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/\|/g</span>, <span style="color:#e6db74">&#39;\\|&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/{/g</span>, <span style="color:#e6db74">&#39;\\{&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/}/g</span>, <span style="color:#e6db74">&#39;\\}&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/\./g</span>, <span style="color:#e6db74">&#39;\\.&#39;</span>)
+    .<span style="color:#a6e22e">replace</span>(<span style="color:#e6db74">/!/g</span>, <span style="color:#e6db74">&#39;\\!&#39;</span>);
+}
+
+<span style="color:#66d9ef">export</span> <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">TelegramNotifyPlugin</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">async</span> ({ <span style="color:#a6e22e">client</span> }<span style="color:#f92672">:</span> { <span style="color:#a6e22e">client</span>: <span style="color:#66d9ef">OpenCodeClient</span> }) <span style="color:#f92672">=&gt;</span> {
+  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">token</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">process</span>.<span style="color:#a6e22e">env</span>.<span style="color:#a6e22e">OP_TELEGRAM_TOKEN</span>;
+  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">chatId</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">process</span>.<span style="color:#a6e22e">env</span>.<span style="color:#a6e22e">OP_TELEGRAM_CHAT_ID</span>;
+
+  <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">token</span> <span style="color:#f92672">||</span> <span style="color:#f92672">!</span><span style="color:#a6e22e">chatId</span>) {
+    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#e6db74">&#39;[TelegramNotifyPlugin] Missing OP_TELEGRAM_TOKEN or OP_TELEGRAM_CHAT_ID, notifications disabled&#39;</span>);
+    <span style="color:#66d9ef">return</span> { <span style="color:#a6e22e">event</span>: <span style="color:#66d9ef">async</span> () <span style="color:#f92672">=&gt;</span> {} };
+  }
+
+  <span style="color:#66d9ef">return</span> {
+    <span style="color:#a6e22e">event</span>: <span style="color:#66d9ef">async</span> ({ <span style="color:#a6e22e">event</span> }) <span style="color:#f92672">=&gt;</span> {
+      <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">event</span>.<span style="color:#66d9ef">type</span> <span style="color:#f92672">===</span> <span style="color:#e6db74">&#34;session.idle&#34;</span>) {
+        <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">sid</span> <span style="color:#f92672">=</span> (<span style="color:#a6e22e">event</span> <span style="color:#66d9ef">as</span> <span style="color:#a6e22e">SessionIdleEvent</span>).<span style="color:#a6e22e">properties</span><span style="color:#f92672">?</span>.<span style="color:#a6e22e">sessionID</span>;
+        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">sid</span>) <span style="color:#66d9ef">return</span>;
+
+        <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">text</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">getLastMessageContent</span>(<span style="color:#a6e22e">client</span>, <span style="color:#a6e22e">sid</span>);
+        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">text</span>) <span style="color:#66d9ef">return</span>;
+
+        <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">prefix</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;✅ *OpenCode session finished:*&#34;</span>;
+        <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">suffix</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;\n\n\.\.\.read full message in OpenCode&#34;</span>;
+        
+        <span style="color:#75715e">// Calculate max length for raw text (accounting for prefix and suffix)
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">maxRawTextLength</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">TELEGRAM_MAX_LENGTH</span> <span style="color:#f92672">-</span> <span style="color:#a6e22e">prefix</span>.<span style="color:#a6e22e">length</span> <span style="color:#f92672">-</span> <span style="color:#a6e22e">suffix</span>.<span style="color:#a6e22e">length</span>;
+        
+        <span style="color:#75715e">// Truncate raw text BEFORE escaping to avoid breaking Markdown entities
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">let</span> <span style="color:#a6e22e">truncatedText</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">text</span>;
+        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">truncatedText</span>.<span style="color:#a6e22e">length</span> <span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">maxRawTextLength</span>) {
+          <span style="color:#a6e22e">truncatedText</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">truncatedText</span>.<span style="color:#a6e22e">slice</span>(<span style="color:#ae81ff">0</span>, <span style="color:#a6e22e">maxRawTextLength</span>);
+        }
+        
+        <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">finalEscapedText</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">escapeTelegramMarkdown</span>(<span style="color:#a6e22e">truncatedText</span>);
+        <span style="color:#66d9ef">let</span> <span style="color:#a6e22e">finalText</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">`</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">prefix</span><span style="color:#e6db74">}</span><span style="color:#960050;background-color:#1e0010">\</span><span style="color:#e6db74">n</span><span style="color:#960050;background-color:#1e0010">\</span><span style="color:#e6db74">n</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">finalEscapedText</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>;
+        
+        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">text</span>.<span style="color:#a6e22e">length</span> <span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">maxRawTextLength</span>) {
+          <span style="color:#a6e22e">finalText</span> <span style="color:#f92672">+=</span> <span style="color:#a6e22e">suffix</span>;
+        }
+
+        <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">payload</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">JSON</span>.<span style="color:#a6e22e">stringify</span>({ 
+          <span style="color:#a6e22e">chat_id</span>: <span style="color:#66d9ef">chatId</span>, 
+          <span style="color:#a6e22e">text</span>: <span style="color:#66d9ef">finalText</span>,
+          <span style="color:#a6e22e">parse_mode</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;MarkdownV2&#34;</span>
+        });
+
+        <span style="color:#a6e22e">addPendingOperation</span>(<span style="color:#a6e22e">sendTelegramMessage</span>(<span style="color:#a6e22e">token</span>, <span style="color:#a6e22e">payload</span>));
+      }
+    },
+  };
+};
+
+<span style="color:#66d9ef">async</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getLastMessageContent</span>(<span style="color:#a6e22e">client</span>: <span style="color:#66d9ef">OpenCodeClient</span>, <span style="color:#a6e22e">sessionId</span>: <span style="color:#66d9ef">string</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">string</span> <span style="color:#960050;background-color:#1e0010">|</span> <span style="color:#a6e22e">null</span>&gt; {
+  <span style="color:#66d9ef">try</span> {
+    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">listResponse</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">_client</span>.<span style="color:#a6e22e">request</span>({
+      <span style="color:#a6e22e">method</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;GET&#39;</span>,
+      <span style="color:#a6e22e">url</span><span style="color:#f92672">:</span> <span style="color:#e6db74">`/session/</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">sessionId</span><span style="color:#e6db74">}</span><span style="color:#e6db74">/message`</span>,
+    });
+
+    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">messages</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">listResponse</span><span style="color:#f92672">?</span>.<span style="color:#a6e22e">data</span> <span style="color:#f92672">||</span> [];
+    <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">messages</span>.<span style="color:#a6e22e">length</span> <span style="color:#f92672">===</span> <span style="color:#ae81ff">0</span>) <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span>;
+
+    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">lastMsgId</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">messages</span>[<span style="color:#a6e22e">messages</span>.<span style="color:#a6e22e">length</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>]<span style="color:#f92672">?</span>.<span style="color:#a6e22e">info</span><span style="color:#f92672">?</span>.<span style="color:#a6e22e">id</span>;
+    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">lastMsgId</span>) <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span>;
+
+    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">msgResponse</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">_client</span>.<span style="color:#a6e22e">request</span>({
+      <span style="color:#a6e22e">method</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;GET&#39;</span>,
+      <span style="color:#a6e22e">url</span><span style="color:#f92672">:</span> <span style="color:#e6db74">`/session/</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">sessionId</span><span style="color:#e6db74">}</span><span style="color:#e6db74">/message/</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">lastMsgId</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>,
+    });
+
+    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">extractTextFromParts</span>((<span style="color:#a6e22e">msgResponse</span> <span style="color:#66d9ef">as</span> <span style="color:#66d9ef">any</span>).<span style="color:#a6e22e">data</span> <span style="color:#f92672">||</span> <span style="color:#a6e22e">msgResponse</span>);
+  } <span style="color:#66d9ef">catch</span> (<span style="color:#a6e22e">error</span>) {
+    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#e6db74">&#39;[TelegramNotifyPlugin] Failed to fetch message:&#39;</span>, <span style="color:#a6e22e">error</span>);
+    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span>;
+  }
+}
+
+<span style="color:#66d9ef">function</span> <span style="color:#a6e22e">extractTextFromParts</span>(<span style="color:#a6e22e">msgData</span>: <span style="color:#66d9ef">MessageDetailResponse</span>)<span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span> <span style="color:#f92672">|</span> <span style="color:#66d9ef">null</span> {
+  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">parts</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">msgData</span><span style="color:#f92672">?</span>.<span style="color:#a6e22e">parts</span> <span style="color:#f92672">||</span> [];
+  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">textContent</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">parts</span>
+    .<span style="color:#a6e22e">filter</span>(<span style="color:#a6e22e">p</span> <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">p</span>.<span style="color:#66d9ef">type</span> <span style="color:#f92672">!==</span> <span style="color:#e6db74">&#34;reasoning&#34;</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">p</span>.<span style="color:#66d9ef">type</span> <span style="color:#f92672">!==</span> <span style="color:#e6db74">&#34;thought&#34;</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">text</span>)
+    .<span style="color:#a6e22e">map</span>(<span style="color:#a6e22e">p</span> <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">text</span>)
+    .<span style="color:#a6e22e">join</span>(<span style="color:#e6db74">&#34;\n\n&#34;</span>);
+  
+  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">textContent</span>.<span style="color:#a6e22e">length</span> <span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">MIN_TEXT_LENGTH</span> <span style="color:#f92672">?</span> <span style="color:#a6e22e">textContent</span> : <span style="color:#66d9ef">null</span>;
+}
+
+<span style="color:#66d9ef">async</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">sendTelegramMessage</span>(<span style="color:#a6e22e">token</span>: <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">payload</span>: <span style="color:#66d9ef">string</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">void</span>&gt; {
+  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">controller</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">AbortController</span>();
+  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">timeout</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">setTimeout</span>(() <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">controller</span>.<span style="color:#a6e22e">abort</span>(), <span style="color:#a6e22e">TELEGRAM_TIMEOUT_MS</span>);
+
+  <span style="color:#66d9ef">try</span> {
+    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">response</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(<span style="color:#e6db74">`https://api.telegram.org/bot</span><span style="color:#e6db74">${</span><span style="color:#a6e22e">token</span><span style="color:#e6db74">}</span><span style="color:#e6db74">/sendMessage`</span>, {
+      <span style="color:#a6e22e">method</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;POST&#34;</span>,
+      <span style="color:#a6e22e">headers</span><span style="color:#f92672">:</span> { <span style="color:#e6db74">&#34;Content-Type&#34;</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;application/json&#34;</span> },
+      <span style="color:#a6e22e">body</span>: <span style="color:#66d9ef">payload</span>,
+      <span style="color:#a6e22e">signal</span>: <span style="color:#66d9ef">controller.signal</span>
+    });
+
+    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">ok</span>) {
+      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">errorText</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">text</span>();
+      <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#e6db74">`[TelegramNotifyPlugin] Telegram API error: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">status</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>, <span style="color:#a6e22e">errorText</span>);
+    }
+  } <span style="color:#66d9ef">catch</span> (<span style="color:#a6e22e">error</span>) {
+    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#e6db74">&#39;[TelegramNotifyPlugin] Telegram notification failed:&#39;</span>, <span style="color:#a6e22e">error</span>);
+  } <span style="color:#66d9ef">finally</span> {
+    <span style="color:#a6e22e">clearTimeout</span>(<span style="color:#a6e22e">timeout</span>);
+  }
+}
+
+</code></pre></div><p>Просто кладем в ~/.config/opencode/plugins/telegram.ts , перезапускаем опенкод и смотрим сообщения в своей телеге :)</p>
+<img src="../images/telegram-result.jpg" width="289" height="640" alt="">
+<p>В ближайшее время думаю потестить и пофиксить транкейт, а так же подумать над обратной связью, и возможностью отправлять сообщение через бота (полюбому надо делать это секьюрно))</p>
+<p>UPD: Дело было не в транкейте, с ним все ок. Вобщем плагин иногда не работал совершенно в рандомных случаях. Оказалось опенкод иногда завершал процесс до того как отошлется сообщение в телегу через обычный async/await. Пришлось (как я понял 😅) сделать pendingOperations промис, в который кладутся незавершенные операции, и добавлять его в основной процесс отслеживая событие beforeExit
+.
+Ну и телега иногда возвращала 400, на нечитаемые символы для Markdown, сделал эскейпинг для таких символов.</p>
+<p>Сейчас плагин вроде работет норм, код в статье обновил на актуальный :)</p>
+
+</main>
+
+<footer class="footer">
+    <p>Нотификации из Claude Code и OpenCode в ваш Telegram | Originally published on micro.blog</p>
+    <p>Eugene Burachevskiy | AI vs DevOps</p>
+</footer>
+
+</body>
+</html>

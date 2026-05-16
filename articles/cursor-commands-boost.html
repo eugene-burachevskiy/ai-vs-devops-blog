@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursor commands. Бустим качество работы в Курсоре</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --bg-code: #0d1117;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --border-color: #1e293b;
+            --border-light: #334155;
+            --gradient-1: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+            --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+        .back-btn {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            background: rgba(10,14,26,0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .hero {
+            position: relative;
+            min-height: 45vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(10,14,26,0.8) 0%, rgba(10,14,26,0.95) 100%);
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            padding: 2rem;
+            text-align: center;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--accent-blue);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        .hero h1 {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 1.5rem;
+        }
+        .hero-meta {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        .section {
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border-color);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        .section:last-child { border-bottom: none; }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        h3 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin: 2.5rem 0 1rem;
+            color: var(--text-primary);
+        }
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 2rem 0 0.75rem;
+            color: var(--accent-cyan);
+        }
+        p {
+            margin-bottom: 1.25rem;
+            color: var(--text-secondary);
+        }
+        strong { color: var(--text-primary); font-weight: 600; }
+
+        a { color: var(--accent-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        blockquote {
+            background: var(--bg-card);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: var(--text-primary);
+            position: relative;
+        }
+        blockquote::before {
+            content: '"';
+            font-size: 4rem;
+            color: var(--accent-blue);
+            opacity: 0.2;
+            position: absolute;
+            top: -0.5rem;
+            left: 1rem;
+            font-family: Georgia, serif;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 2rem 0;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        thead { background: var(--bg-secondary); }
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-light);
+            white-space: nowrap;
+        }
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        tbody tr:hover { background: rgba(59,130,246,0.05); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+        pre::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            border-radius: 12px 12px 0 0;
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        pre code { color: #e2e8f0; }
+        :not(pre) > code {
+            background: rgba(59,130,246,0.1);
+            color: var(--accent-cyan);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        ul, ol {
+            margin: 1.5rem 0;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.75rem;
+            color: var(--text-secondary);
+        }
+        li::marker { color: var(--accent-blue); }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .highlight {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+        .highlight pre {
+            margin: 0;
+            border: none;
+        }
+        .highlight pre::before { display: none; }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+        .card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+        .card h4 {
+            margin-top: 0;
+            color: var(--text-primary);
+        }
+        .card p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .checklist li::before {
+            content: '✓';
+            color: var(--accent-green);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(139,92,246,0.1) 100%);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+        }
+        .highlight-box h4 {
+            color: var(--accent-blue);
+            margin-top: 0;
+        }
+
+        .decision-tree {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 2;
+            overflow-x: auto;
+        }
+        .decision-tree .q { color: var(--accent-cyan); font-weight: 600; }
+        .decision-tree .a { color: var(--accent-green); }
+        .decision-tree .arrow { color: var(--text-muted); }
+
+        .footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.5rem; }
+            .card-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<a href="../index.html" class="back-btn">← Back to Blog</a>
+
+<!-- Hero -->
+<header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <div class="hero-badge">AI-Assisted Development</div>
+        <h1>Cursor commands. Бустим качество работы в Курсоре</h1>
+        <p class="hero-subtitle">Предустановленные команды для ускорения разработки и повышения качества кода</p>
+        <div class="hero-meta">
+            <span>📅 January 12, 2026</span>
+            <span>🌐 Russian</span>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <p>Я частенько встречаю, что в проектах уже используют .cursor/rules, а вот .cursor/commands - не часто. Между тем это отличный инструмент для повышения скорости и качества своей работы.</p>
+<p>Плюс команд в курсоре, что их не надо добавлять в каждый репозиторий и менеджить везде отдельно, курсор подтягивает все команды из текущего воркспейса. То есть достаточно положить их в одну репу, а дальше можно использовать для работы со всеми своими открытыми репами.
+Достаточно положить файлы ниже в .cursor/commands/, в окне чата набрать &ldquo;/&rdquo; и выбрать нужную команду. См. скрин ниже:</p>
+<img src="../images/cursor-commands.png" width="600" height="194" alt="">
+<h3 id="дальше-мое-мнение-по-каждому-представленной-здесь-команде-ну-и-сам-код-забирайте-пользуйтесь-">Дальше мое мнение по каждому представленной здесь команде, ну и сам код. Забирайте, пользуйтесь ;)</h3>
+<p><strong>explain-code.md</strong>: объясняет выделенный участок кода (или переданный в чат). Да, конечно можно просто скопировать строки кода и спросить &ldquo;What this code does?&rdquo;. Но результат будет непредсказуемым. Иногда все хорошо и понятно, иногда неполно и недостаточно, придется задавать наводящие вопросы и дальше тратить токены. Вся прелесть курсор команд в том, что мы создаем predefined формат вопроса, очень подробный и с полностью предсказуемым результатом, и запускаем одной кнопкой. В данном случае результат всегда будет содержать важные пояснения по участкам кода, логику, используемые паттерны, рекомендации. Удобно!</p>
+<p><strong>code-review.md</strong>: делаем подробное код ревью. Команда сразу берет незакомиченые файлы через git diff, или закомиченые новые изменения в текущем бранче, не надо передавать все файлы и сттроки в контекст. Ревью подробное, выдает что ок, где были найдены issues и их severity (critical, medium, low), рассказывает про Refactoring opportunities.</p>
+<p><strong>onboarding-plan.md</strong>: вызываем команду и пишем что-то о себе (I&rsquo;m a devops engineer, highly experienced in containers, compose, k8s. или I&rsquo;m a senior python developer slightly familiar with AI-based products development) и получаем релевантную для себя онбординг информацию по проекту. Что полезно лично для моей роли, какие доки читать, как застепатить локальный энвайронмент итд итп. Все с подробным планом по дням.</p>
+<p><strong>commit-message.md/pr-description.md</strong>: если ваши комиты выглядят как fix1, fix2, fix3finalfinal, а в PR всегда написано &ldquo;Closes #1234&rdquo; - то эта штука для вас. Проверяет изменения в файлах в стейдже или что поменялось в бранче и выдает релевантное и подробное сообщение, которое остается просто вставить в  git commit -m &quot;&quot; или в PR вашего гитхаба/гитлаба.</p>
+<h3 id="explain-codemd">explain-code.md</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-markdown" data-lang="markdown">---
+description: &#39;Explain selected code or file in detail&#39;
+argument-hint: [relevant code or file]
+---
+
+<span style="color:#75715e">## Role
+</span><span style="color:#75715e"></span>
+You&#39;re a senior developer explaining code to a colleague. Be clear, thorough, and pedagogical.
+
+<span style="color:#75715e">## Task
+</span><span style="color:#75715e"></span>
+Explain the code that the user has selected or referenced by:
+
+<span style="color:#66d9ef">1.</span> Describing what the code does at a high level
+<span style="color:#66d9ef">2.</span> Breaking down the key components and logic flow
+<span style="color:#66d9ef">3.</span> Explaining any complex patterns or algorithms
+<span style="color:#66d9ef">4.</span> Highlighting important details or gotchas
+<span style="color:#66d9ef">5.</span> Providing context about why it might be designed this way
+
+<span style="color:#75715e">## Explanation Structure
+</span><span style="color:#75715e"></span>
+<span style="color:#75715e">### Overview
+</span><span style="color:#75715e"></span>Start with a concise summary of what this code does
+
+<span style="color:#75715e">### Key Components
+</span><span style="color:#75715e"></span>Break down the main parts:
+<span style="color:#66d9ef">-</span> Functions/classes and their responsibilities
+<span style="color:#66d9ef">-</span> Important variables or state
+<span style="color:#66d9ef">-</span> External dependencies
+
+<span style="color:#75715e">### Logic Flow
+</span><span style="color:#75715e"></span>Explain the execution path:
+<span style="color:#66d9ef">-</span> What happens step by step
+<span style="color:#66d9ef">-</span> Decision points and branches
+<span style="color:#66d9ef">-</span> Error handling
+
+<span style="color:#75715e">### Notable Patterns
+</span><span style="color:#75715e"></span>Identify any design patterns, idioms, or techniques:
+<span style="color:#66d9ef">-</span> Why they&#39;re used here
+<span style="color:#66d9ef">-</span> Benefits and trade-offs
+
+<span style="color:#75715e">### Gotchas &amp; Edge Cases
+</span><span style="color:#75715e"></span>Point out:
+<span style="color:#66d9ef">-</span> Potential pitfalls
+<span style="color:#66d9ef">-</span> Edge cases being handled
+<span style="color:#66d9ef">-</span> Things that might be non-obvious
+
+<span style="color:#75715e">### Context
+</span><span style="color:#75715e"></span>If relevant:
+<span style="color:#66d9ef">-</span> Why this approach was chosen
+<span style="color:#66d9ef">-</span> Alternative approaches
+<span style="color:#66d9ef">-</span> How it fits into the larger system
+
+<span style="color:#75715e">## Guidelines
+</span><span style="color:#75715e"></span>
+<span style="color:#66d9ef">-</span> Use analogies when helpful
+<span style="color:#66d9ef">-</span> Provide examples for complex concepts
+<span style="color:#66d9ef">-</span> Link to documentation for specialized terms
+<span style="color:#66d9ef">-</span> Be specific with technical details
+<span style="color:#66d9ef">-</span> Don&#39;t assume prior knowledge of the codebase
+<span style="color:#66d9ef">-</span> Highlight both good practices and potential improvements
+
+</code></pre></div><h3 id="code-reviewmd">code-review.md</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-markdown" data-lang="markdown">---
+
+description: &#39;Perform comprehensive code review with structured feedback&#39;
+
+tools: [&#39;changes&#39;]
+
+---
+
+
+
+<span style="color:#75715e">## Role
+</span><span style="color:#75715e"></span>
+
+
+You&#39;re a senior software engineer conducting a thorough code review with focus on code quality, maintainability, and best practices.
+
+
+
+<span style="color:#75715e">## Task
+</span><span style="color:#75715e"></span>
+
+
+Review the code changes by:
+
+
+
+<span style="color:#66d9ef">1.</span> Running <span style="color:#e6db74">`git diff`</span> to analyze uncommitted changes, or
+
+<span style="color:#66d9ef">2.</span> Running <span style="color:#e6db74">`git diff main...HEAD`</span> to review branch changes
+
+<span style="color:#66d9ef">3.</span> Providing structured, actionable feedback
+
+
+
+<span style="color:#75715e">## Review Criteria
+</span><span style="color:#75715e"></span>
+
+
+<span style="color:#75715e">### 1. Code Quality
+</span><span style="color:#75715e"></span>
+
+
+<span style="color:#66d9ef">-</span> **Readability**: Is the code easy to understand?
+
+<span style="color:#66d9ef">-</span> **Naming**: Are variables, functions, and classes well-named?
+
+<span style="color:#66d9ef">-</span> **Complexity**: Can any complex logic be simplified?
+
+<span style="color:#66d9ef">-</span> **DRY principle**: Is there unnecessary duplication?
+
+
+
+<span style="color:#75715e">### 2. Best Practices
+</span><span style="color:#75715e"></span>
+
+
+<span style="color:#66d9ef">-</span> **Error handling**: Are errors handled appropriately?
+
+<span style="color:#66d9ef">-</span> **Type safety**: Are types used correctly (TypeScript/typed languages)?
+
+<span style="color:#66d9ef">-</span> **Security**: Are there potential security vulnerabilities?
+
+<span style="color:#66d9ef">-</span> **Performance**: Are there obvious performance issues?
+
+
+
+<span style="color:#75715e">### 3. Architecture
+</span><span style="color:#75715e"></span>
+
+
+<span style="color:#66d9ef">-</span> **Separation of concerns**: Is logic properly separated?
+
+<span style="color:#66d9ef">-</span> **Single responsibility**: Does each function/class do one thing?
+
+<span style="color:#66d9ef">-</span> **Dependencies**: Are dependencies managed well?
+
+<span style="color:#66d9ef">-</span> **Reusability**: Can components be reused?
+
+
+
+<span style="color:#75715e">### 4. Testing
+</span><span style="color:#75715e"></span>
+
+
+<span style="color:#66d9ef">-</span> **Test coverage**: Are critical paths tested?
+
+<span style="color:#66d9ef">-</span> **Edge cases**: Are edge cases handled and tested?
+
+<span style="color:#66d9ef">-</span> **Test quality**: Are tests meaningful and maintainable?
+
+
+
+<span style="color:#75715e">### 5. Documentation
+</span><span style="color:#75715e"></span>
+
+
+<span style="color:#66d9ef">-</span> **Comments**: Are complex parts documented?
+
+<span style="color:#66d9ef">-</span> **Type annotations**: Are function signatures documented?
+
+<span style="color:#66d9ef">-</span> **README updates**: Does documentation reflect changes?
+
+
+
+<span style="color:#75715e">## Output Format
+</span><span style="color:#75715e"></span>
+
+
+Provide feedback in this structure:
+
+
+
+<span style="color:#75715e">### ✅ Strengths
+</span><span style="color:#75715e"></span>
+
+
+List what&#39;s done well (be specific)
+
+
+
+<span style="color:#75715e">### ⚠️ Issues Found
+</span><span style="color:#75715e"></span>
+
+
+For each issue:
+
+
+
+<span style="color:#66d9ef">-</span> **Severity**: 🔴 Critical | 🟡 Medium | 🔵 Low
+
+<span style="color:#66d9ef">-</span> **Location**: File and line numbers
+
+<span style="color:#66d9ef">-</span> **Problem**: Clear description
+
+<span style="color:#66d9ef">-</span> **Suggestion**: Specific fix with code example
+
+<span style="color:#66d9ef">-</span> **Rationale**: Why this matters
+
+
+
+<span style="color:#75715e">### 🔧 Refactoring Opportunities
+</span><span style="color:#75715e"></span>
+
+
+Optional improvements that would enhance code quality
+
+
+
+<span style="color:#75715e">### 📚 Learning Resources
+</span><span style="color:#75715e"></span>
+
+
+Relevant documentation or best practices (if applicable)
+
+
+
+<span style="color:#75715e">### Summary
+</span><span style="color:#75715e"></span>
+
+
+Overall assessment and recommended next steps
+
+
+
+<span style="color:#75715e">## Guidelines
+</span><span style="color:#75715e"></span>
+
+
+<span style="color:#66d9ef">-</span> Be constructive and educational, not just critical
+
+<span style="color:#66d9ef">-</span> Provide code examples for suggestions
+
+<span style="color:#66d9ef">-</span> Prioritize issues by severity
+
+<span style="color:#66d9ef">-</span> Explain <span style="font-style:italic">*why*</span> something is an issue
+
+<span style="color:#66d9ef">-</span> Consider the context and project requirements
+
+<span style="color:#66d9ef">-</span> For TypeScript/React projects, focus on type safety and component patterns
+
+<span style="color:#66d9ef">-</span> For Python projects, follow PEP 8 and type hints
+
+<span style="color:#66d9ef">-</span> For Node.js projects, focus on async handling and error management
+
+</code></pre></div><h3 id="onboarding-planmd">onboarding-plan.md</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-markdown" data-lang="markdown">---
+
+description: &#39;Help new team members onboard with a phased plan and suggestions for first tasks.&#39;
+
+---
+
+
+
+# Create My Onboarding Plan
+
+
+
+I&#39;m a new team member joining this project and I need help creating a structured onboarding plan.
+
+
+
+My background My background will be specified at the end of the message. If I didn&#39;t specify the background, please ask me for the background before answering the question. 
+
+
+
+Please create a personalized phased onboarding plan that includes the following phases.
+
+
+
+<span style="color:#75715e">## Phase 1 - Foundation
+</span><span style="color:#75715e"></span>
+
+
+Environment setup with step-by-step instructions and troubleshooting tips, plus identifying the most important documentation to read first
+
+
+
+<span style="color:#75715e">## Phase 2 - Exploration
+</span><span style="color:#75715e"></span>
+
+
+Codebase discovery starting with README files, running existing tests/scripts to understand workflows, and finding beginner-friendly first tasks like documentation improvements. If possible, find me specific open issues or tasks that are suitable for my background.
+
+
+
+<span style="color:#75715e">## Phase 3 - Integration
+</span><span style="color:#75715e"></span>
+
+
+Learning team processes, making first contributions, and building confidence through early wins
+
+
+
+For each phase, break down complex topics into manageable steps, recommend relevant resources, provide concrete next steps, and suggest hands-on practice over just reading theory.
+
+
+</code></pre></div><h3 id="commit-messagemd">commit-message.md</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-markdown" data-lang="markdown">---
+
+description: &#39;Generate conventional commit messages from staged changes&#39;
+
+argument-hint: [relevant code or file]
+
+---
+
+
+
+<span style="color:#75715e">## Role
+</span><span style="color:#75715e"></span>
+
+
+You&#39;re an expert at writing clear, descriptive commit messages following conventional commit standards.
+
+
+
+<span style="color:#75715e">## Task
+</span><span style="color:#75715e"></span>
+
+
+Generate a commit message for the currently staged changes by:
+
+
+
+<span style="color:#66d9ef">1.</span> Running <span style="color:#e6db74">`git diff --staged`</span> to see the changes
+
+<span style="color:#66d9ef">2.</span> Analyzing the modifications to understand their purpose
+
+<span style="color:#66d9ef">3.</span> Creating a commit message following this format:
+
+
+
+
+
+&lt;<span style="color:#f92672">type</span>&gt;(&lt;<span style="color:#f92672">scope</span>&gt;): &lt;<span style="color:#f92672">subject</span>&gt;
+
+
+
+&lt;<span style="color:#f92672">body</span>&gt;
+
+
+
+&lt;<span style="color:#f92672">footer</span>&gt;
+
+
+
+
+
+<span style="color:#75715e">## Commit Type Guidelines
+</span><span style="color:#75715e"></span>
+
+
+<span style="color:#66d9ef">-</span> **feat**: New feature
+
+<span style="color:#66d9ef">-</span> **fix**: Bug fix
+
+<span style="color:#66d9ef">-</span> **docs**: Documentation changes
+
+<span style="color:#66d9ef">-</span> **style**: Code style changes (formatting, semicolons, etc.)
+
+<span style="color:#66d9ef">-</span> **refactor**: Code refactoring without functionality changes
+
+<span style="color:#66d9ef">-</span> **perf**: Performance improvements
+
+<span style="color:#66d9ef">-</span> **test**: Adding or updating tests
+
+<span style="color:#66d9ef">-</span> **chore**: Build process or tooling changes
+
+<span style="color:#66d9ef">-</span> **ci**: CI/CD changes
+
+
+
+<span style="color:#75715e">## Requirements
+</span><span style="color:#75715e"></span>
+
+
+<span style="color:#66d9ef">1.</span> <span style="font-weight:bold">**Subject line**</span> (50 chars max):
+
+   <span style="color:#66d9ef">-</span> Use imperative mood (&#34;add&#34; not &#34;added&#34;)
+
+   <span style="color:#66d9ef">-</span> Don&#39;t capitalize first letter
+
+   <span style="color:#66d9ef">-</span> No period at end
+
+   
+
+<span style="color:#66d9ef">2.</span> <span style="font-weight:bold">**Body**</span> (optional, wrap at 72 chars):
+
+   <span style="color:#66d9ef">-</span> Explain <span style="font-style:italic">*what*</span> and <span style="font-style:italic">*why*</span>, not <span style="font-style:italic">*how*</span>
+
+   <span style="color:#66d9ef">-</span> Include motivation for the change
+
+   <span style="color:#66d9ef">-</span> Reference any breaking changes
+
+
+
+<span style="color:#66d9ef">3.</span> <span style="font-weight:bold">**Footer**</span> (optional):
+
+   <span style="color:#66d9ef">-</span> Reference issue numbers (e.g., &#34;Fixes #123&#34;)
+
+   <span style="color:#66d9ef">-</span> Note breaking changes with &#34;BREAKING CHANGE:&#34;
+
+
+
+<span style="color:#75715e">## Output
+</span><span style="color:#75715e"></span>
+
+
+Provide the commit message ready to use with <span style="color:#e6db74">`git commit -m`</span>. The commit message should be rendered in markdown format.
+
+</code></pre></div><h3 id="pr-descriptionmd">pr-description.md</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-markdown" data-lang="markdown">---
+
+description: &#39;Generate concise and natural pull request descriptions&#39;
+
+---
+
+
+
+<span style="color:#75715e">## Role
+</span><span style="color:#75715e"></span>
+
+
+You&#39;re a developer writing a clear and concise pull request description that sounds natural and human.
+
+
+
+<span style="color:#75715e">## Task
+</span><span style="color:#75715e"></span>
+
+
+Generate a pull request description by:
+
+
+
+<span style="color:#66d9ef">1.</span> Running <span style="color:#e6db74">`git diff main...HEAD`</span> to see the changes
+
+<span style="color:#66d9ef">2.</span> Understanding what was changed and why
+
+<span style="color:#66d9ef">3.</span> Creating a natural, developer-style description
+
+
+
+<span style="color:#75715e">## Requirements
+</span><span style="color:#75715e"></span>
+
+
+<span style="color:#66d9ef">-</span> Keep it concise and conversational
+
+<span style="color:#66d9ef">-</span> Write like a real developer would
+
+<span style="color:#66d9ef">-</span> Focus on what matters
+
+<span style="color:#66d9ef">-</span> Reference issue numbers naturally (e.g., &#34;fixes #123&#34; or &#34;addresses #456&#34;)
+
+<span style="color:#66d9ef">-</span> Avoid corporate jargon or overly formal language
+
+<span style="color:#66d9ef">-</span> Don&#39;t use templates or sections unless the change is complex
+
+
+
+<span style="color:#75715e">## Style Guidelines
+</span><span style="color:#75715e"></span>
+
+
+<span style="font-weight:bold">**Good examples:**</span>
+
+<span style="color:#66d9ef">-</span> &#34;Fixed the auth redirect loop when session expires. The middleware wasn&#39;t checking token validity correctly.&#34;
+
+<span style="color:#66d9ef">-</span> &#34;Added dark mode support. Users can toggle it in settings, and the preference is saved to localStorage.&#34;
+
+<span style="color:#66d9ef">-</span> &#34;Refactored the validation logic to use Pydantic models. Much cleaner now and easier to test.&#34;
+
+
+
+<span style="font-weight:bold">**Avoid:**</span>
+
+<span style="color:#66d9ef">-</span> Overly formal: &#34;This PR implements feature X as per requirements...&#34;
+
+<span style="color:#66d9ef">-</span> Too vague: &#34;Updated files&#34;
+
+<span style="color:#66d9ef">-</span> Template speak: &#34;## Summary\n## Changes\n## Testing&#34;
+
+
+
+<span style="color:#75715e">## Output
+</span><span style="color:#75715e"></span>
+
+
+Provide a description ready to paste into the PR/MR description field.
+
+
+
+For simple changes: 1-2 sentences
+
+For complex changes: Brief paragraph + bullet points if needed
+
+</code></pre></div><p><i> Спасибо за внимание и подписывайтесь на телеграм канал <a href="https://t.me/ai_vs_devops">https://t.me/ai_vs_devops</a> </i></p>
+
+</main>
+
+<footer class="footer">
+    <p>Cursor commands. Бустим качество работы в Курсоре | Originally published on micro.blog</p>
+    <p>Eugene Burachevskiy | AI vs DevOps</p>
+</footer>
+
+</body>
+</html>

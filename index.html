@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI vs DevOps | Eugene Burachevskiy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --bg-code: #0d1117;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --border-color: #1e293b;
+            --border-light: #334155;
+            --gradient-1: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+            --gradient-2: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.5);
+            --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-blue);
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            opacity: 0.2;
+            background-image: url('images/hero_ai.jpg');
+            background-size: cover;
+            background-position: center;
+            filter: blur(3px);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(10,14,26,0.85) 0%, rgba(10,14,26,0.98) 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .profile-photo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid var(--accent-blue);
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .hero-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .hero-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .hero-links a:hover {
+            color: var(--accent-blue);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 4rem 0 2rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+            margin-left: 1rem;
+        }
+
+        /* Article Cards */
+        .articles-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        .article-card {
+            display: flex;
+            gap: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .article-card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+
+        .article-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .article-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .article-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .article-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .article-desc {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            line-height: 1.5;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .article-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .lang-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.5rem;
+            background: rgba(139,92,246,0.1);
+            border: 1px solid rgba(139,92,246,0.3);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--accent-purple);
+        }
+
+        /* Featured Article */
+        .featured-card {
+            display: block;
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .featured-card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+
+        .featured-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            opacity: 0.7;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .featured-content {
+            padding: 2rem;
+        }
+
+        .featured-badge {
+            display: inline-block;
+            padding: 0.35rem 1rem;
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--accent-green);
+            margin-bottom: 0.75rem;
+        }
+
+        .featured-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .featured-desc {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .featured-meta {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 4rem 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            .article-card {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .article-number {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            .featured-image {
+                height: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1>AI vs DevOps</h1>
+        <p class="hero-subtitle">Deep dives into AI engineering, infrastructure, and the intersection of both worlds. By Eugene Burachevskiy.</p>
+        <div class="hero-links">
+            <a href="https://github.com/eugene-burachevskiy">GitHub</a>
+            <a href="https://t.me/ai_vs_devops">Telegram</a>
+            <a href="https://www.linkedin.com/in/eugene-burachevskiy/">LinkedIn</a>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <!-- Featured Article -->
+    <h2 class="section-title">Featured</h2>
+    <a href="articles/advanced-llm-ai-engineering-may-2026.html" class="featured-card">
+        <img src="images/hero_ai.jpg" alt="AI Engineering" class="featured-image">
+        <div class="featured-content">
+            <div class="featured-badge">Latest Deep Dive</div>
+            <h3 class="featured-title">Deep Dive: Advanced LLM/AI Engineering as of May 2026</h3>
+            <p class="featured-desc">A comprehensive guide covering harness engineering, caching strategies, KV cache management, speculative decoding, structured outputs, evals, cost attribution, agent guardrails, observability, model routing, and fine-tuning decisions.</p>
+            <div class="featured-meta">
+                <span>📅 May 2026</span>
+                <span>⏱️ 25 min read</span>
+                <span>📋 11 Topics</span>
+                <span>🇬🇧 English</span>
+            </div>
+        </div>
+    </a>
+
+    <!-- All Articles -->
+    <h2 class="section-title">All Articles</h2>
+    <div class="articles-list">
+
+        <a href="articles/telegram-notifications-claude-opencode.html" class="article-card">
+            <div class="article-number">2</div>
+            <div class="article-content">
+                <div class="article-badge">AI Tools & Automation</div>
+                <h3 class="article-title">Notifications from Claude Code and OpenCode to your Telegram (RU)</h3>
+                <p class="article-desc">How to receive notifications when your AI agent finishes work, using hooks and custom TypeScript plugins.</p>
+                <div class="article-meta">
+                    <span>📅 March 3, 2026</span>
+                    <span class="lang-tag">RU</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="articles/cursor-commands-boost.html" class="article-card">
+            <div class="article-number">3</div>
+            <div class="article-content">
+                <div class="article-badge">AI-Assisted Development</div>
+                <h3 class="article-title">Cursor Commands: Boosting Work Quality in Cursor (RU)</h3>
+                <p class="article-desc">Pre-defined commands for explain-code, code-review, onboarding-plan, commit-message, and PR description.</p>
+                <div class="article-meta">
+                    <span>📅 January 12, 2026</span>
+                    <span class="lang-tag">RU</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="articles/kiss-vs-dry-iac.html" class="article-card">
+            <div class="article-number">4</div>
+            <div class="article-content">
+                <div class="article-badge">Infrastructure as Code</div>
+                <h3 class="article-title">KISS vs DRY: How Not to Overcomplicate Your Infrastructure-as-Code (RU)</h3>
+                <p class="article-desc">A practical look at balancing reuse and simplicity in Terraform. When to avoid abstraction frameworks and keep things flat.</p>
+                <div class="article-meta">
+                    <span>📅 January 9, 2026</span>
+                    <span class="lang-tag">RU</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="articles/spec-driven-development-part1.html" class="article-card">
+            <div class="article-number">5</div>
+            <div class="article-content">
+                <div class="article-badge">AI Development Methodology</div>
+                <h3 class="article-title">Spec Driven Development Part 1: From Vibe Coding to SDD, Kiro (RU)</h3>
+                <p class="article-desc">The evolution of AI development: from spontaneous vibe coding to specification-driven processes with Memory Bank and Kiro IDE.</p>
+                <div class="article-meta">
+                    <span>📅 December 28, 2025</span>
+                    <span class="lang-tag">RU</span>
+                </div>
+            </div>
+        </a>
+
+    </div>
+
+</main>
+
+<footer class="footer">
+    <p>AI vs DevOps Blog by Eugene Burachevskiy</p>
+    <p>Migrated from micro.blog to GitHub Pages. All content preserved.</p>
+</footer>
+
+</body>
+</html>
