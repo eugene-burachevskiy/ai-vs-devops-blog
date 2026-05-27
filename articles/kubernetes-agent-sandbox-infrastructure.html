@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes Agent Sandbox: A Native Primitive for AI Agent Infrastructure</title>
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://eugene-burachevskiy.github.io/ai-vs-devops-blog/articles/kubernetes-agent-sandbox-infrastructure.html">
+    <meta property="og:title" content="Kubernetes Agent Sandbox: A Native Primitive for AI Agent Infrastructure">
+    <meta property="og:description" content="Why Kubernetes Agent Sandbox matters for DevOps and AI engineers. Deep dive into features, architecture, production usage, and community adoption.">
+    <meta property="og:image" content="https://eugene-burachevskiy.github.io/ai-vs-devops-blog/images/hero_ai.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Kubernetes Agent Sandbox: A Native Primitive for AI Agent Infrastructure">
+    <meta name="twitter:description" content="Why Kubernetes Agent Sandbox matters for DevOps and AI engineers. Deep dive into features, architecture, production usage, and community adoption.">
+    <meta name="twitter:image" content="https://eugene-burachevskiy.github.io/ai-vs-devops-blog/images/hero_ai.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --bg-code: #0d1117;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --border-color: #1e293b;
+            --border-light: #334155;
+            --gradient-1: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+            --gradient-2: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.5);
+            --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-blue);
+        }
+
+        .hero {
+            position: relative;
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            opacity: 0.3;
+            background-image: url('../images/hero_ai.jpg');
+            background-size: cover;
+            background-position: center;
+            filter: blur(2px);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(10,14,26,0.8) 0%, rgba(10,14,26,0.95) 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--accent-green);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 2rem;
+        }
+
+        .hero-meta {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            background: rgba(10,14,26,0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .toc-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10,14,26,0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+        }
+
+        .toc-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .toc-inner::-webkit-scrollbar {
+            display: none;
+        }
+
+        .toc-link {
+            padding: 0.5rem 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .toc-link:hover, .toc-link.active {
+            color: var(--accent-blue);
+            background: rgba(59,130,246,0.1);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .section {
+            padding: 4rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .section-title-group h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .section-title-group p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+        }
+
+        .section-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin: 2rem 0;
+            opacity: 0.8;
+            border: 1px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin: 2.5rem 0 1rem;
+            color: var(--text-primary);
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 2rem 0 0.75rem;
+            color: var(--accent-cyan);
+        }
+
+        p {
+            margin-bottom: 1.25rem;
+            color: var(--text-secondary);
+        }
+
+        strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        blockquote {
+            background: var(--bg-card);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: var(--text-primary);
+            position: relative;
+        }
+
+        blockquote::before {
+            content: '"';
+            font-size: 4rem;
+            color: var(--accent-blue);
+            opacity: 0.2;
+            position: absolute;
+            top: -0.5rem;
+            left: 1rem;
+            font-family: Georgia, serif;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 2rem 0;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background: var(--bg-secondary);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-light);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        tbody tr:hover {
+            background: rgba(59,130,246,0.05);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+
+        pre::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            border-radius: 12px 12px 0 0;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        pre code {
+            color: #e2e8f0;
+        }
+
+        :not(pre) > code {
+            background: rgba(59,130,246,0.1);
+            color: var(--accent-cyan);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        ul, ol {
+            margin: 1.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        li::marker {
+            color: var(--accent-blue);
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h4 {
+            margin-top: 0;
+            color: var(--text-primary);
+        }
+
+        .card p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(139,92,246,0.1) 100%);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+        }
+
+        .highlight-box h4 {
+            color: var(--accent-blue);
+            margin-top: 0;
+        }
+
+        .decision-tree {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 2;
+            overflow-x: auto;
+        }
+
+        .decision-tree .q {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .decision-tree .a {
+            color: var(--accent-green);
+        }
+
+        .decision-tree .arrow {
+            color: var(--text-muted);
+        }
+
+        .summary-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 3rem;
+            margin: 4rem 0;
+        }
+
+        .summary-section h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .summary-item {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .summary-num {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .summary-item p {
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 4rem 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            .section-header {
+                flex-direction: column;
+            }
+            .section-number {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+            .summary-section {
+                padding: 1.5rem;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+<a href="../index.html" class="back-btn">← Back to Blog</a>
+
+<!-- Hero -->
+<header class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <div class="hero-badge">AI Engineering</div>
+        <h1>Kubernetes Agent Sandbox: A Native Primitive for AI Agent Infrastructure</h1>
+        <p class="hero-subtitle">Why the Kubernetes community just built the safety lock for autonomous AI agents — and why your DevOps toolchain will never be the same.</p>
+        <div class="hero-meta">
+            <span>📅 May 2026</span>
+            <span>⏱️ 20 min read</span>
+            <span>📋 8 Topics</span>
+        </div>
+    </div>
+</header>
+
+<!-- Table of Contents -->
+<nav class="toc-nav">
+    <div class="toc-inner">
+        <a href="#problem" class="toc-link">The Problem</a>
+        <a href="#what-is" class="toc-link">What Is Agent Sandbox</a>
+        <a href="#features" class="toc-link">Core Features</a>
+        <a href="#architecture" class="toc-link">Architecture</a>
+        <a href="#usecases" class="toc-link">Use Cases</a>
+        <a href="#production" class="toc-link">Production</a>
+        <a href="#community" class="toc-link">Community</a>
+        <a href="#roadmap" class="toc-link">Roadmap</a>
+        <a href="#summary" class="toc-link">Summary</a>
+    </div>
+</nav>
+
+<main class="container">
+
+<!-- Section 1: The Problem -->
+<section class="section" id="problem">
+    <div class="section-header">
+        <div class="section-number">1</div>
+        <div class="section-title-group">
+            <h2>The "StatefulSet Hack" Era Is Over</h2>
+            <p>How we used to run agents, and why every existing solution is a workaround.</p>
+        </div>
+    </div>
+
+    <img src="../images/robot.jpg" alt="AI Robot" class="section-image">
+
+    <h3>How We Got Here</h3>
+    <p>Let's be honest: Kubernetes was never designed for AI agents. It was designed for stateless web services that scale horizontally and databases that scale vertically with ordered names. AI agents are neither.</p>
+
+    <p>An agent is a <strong>single thing</strong> that runs for a long time, needs to remember state, executes arbitrary and often untrusted code, and must pick up exactly where it left off. You don't scale it by adding replicas — you run <strong>thousands of separate singletons</strong>.</p>
+
+    <p>So what did we do? We improvised. And by "improvised," I mean we duct-taped together solutions that would make any platform engineer weep:</p>
+
+    <ul>
+        <li><strong>Docker Socket or DinD Sidecar</strong> — Your orchestrator spins up sub-agents by talking directly to the Docker socket. If you're running on a VM, that's one thing. If you're in Kubernetes, you mount a Docker-in-Docker sidecar inside a pod and pray the security team never audits it. Vertical scaling only. Slow starts. Questionable isolation. 🙈</li>
+        <li><strong>StatefulSet Hacks</strong> — Deploy a StatefulSet with <code>replicas: 1</code>, attach a headless Service, and pretend it's a "singleton sandbox." It works until you need lifecycle controls, fast scaling, or anything resembling modern platform engineering. Then it becomes an operational nightmare.</li>
+        <li><strong>Raw Deployments with PVCs</strong> — Even more brittle. Pods get rescheduled, identities shift, volumes don't follow cleanly, and you end up writing more bash scripts than YAML.</li>
+    </ul>
+
+    <blockquote>
+        "Mapping these unique agentic workloads to traditional Kubernetes primitives requires a new abstraction." — <a href="https://kubernetes.io/blog/2026/03/20/running-agents-on-kubernetes-with-agent-sandbox/" target="_blank" rel="noopener">Janet Kuo & Justin Santa Barbara, Kubernetes Blog</a>
+    </blockquote>
+
+    <p>Every infrastructure feature on top of these workarounds — auto-scaling, secure isolation, network policies, cost optimization — is just another layer of hacks. And we all know how that ends: 3 AM pages, angry security reviews, and a Jira backlog titled "Agent Infrastructure: The Reckoning."</p>
+
+    <div class="highlight-box">
+        <h4>The Core Insight</h4>
+        <p>AI agents need a <strong>new Kubernetes primitive</strong>. Not a hack on top of Deployments. Not a clever StatefulSet pattern. A first-class resource that understands what an agent actually is: a stateful, isolated, singleton workload with a lifecycle of its own.</p>
+    </div>
+</section>
+
+<!-- Section 2: What Is Agent Sandbox -->
+<section class="section" id="what-is">
+    <div class="section-header">
+        <div class="section-number">2</div>
+        <div class="section-title-group">
+            <h2>What Is Kubernetes Agent Sandbox?</h2>
+            <p>A declarative, CRD-based API that turns Kubernetes into an Agent Operating System.</p>
+        </div>
+    </div>
+
+    <img src="../images/dashboard.jpg" alt="Dashboard" class="section-image">
+
+    <p>At <a href="https://io.google/2026/explore" target="_blank" rel="noopener">Google I/O 2026</a>, alongside the expected Gemini 3.5 series and the impressive Omni multimedia model, Google quietly highlighted a piece of infrastructure that may end up being far more important for DevOps and AI engineers than any single model release.</p>
+
+    <p>It's called <strong>Kubernetes Agent Sandbox</strong> — an open-source project under <a href="https://github.com/kubernetes-sigs/agent-sandbox" target="_blank" rel="noopener">Kubernetes SIG Apps</a> that adds a dedicated controller and a family of CRDs to any Kubernetes cluster. The goal? To provide a <strong>native, declarative, standardized API for managing isolated, stateful, singleton workloads</strong> — built specifically for AI agent runtimes, coding environments, and untrusted code execution.</p>
+
+    <p>Instead of stitching together StatefulSets, Services, and PersistentVolumeClaims by hand, you describe the sandbox you want, and the controller handles the rest.</p>
+
+    <h3>The Core CRDs</h3>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>CRD</th>
+                    <th>Purpose</th>
+                    <th>Analogy</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>Sandbox</code></td>
+                    <td>The core resource: a single, stateful pod with stable hostname and optional persistent storage</td>
+                    <td>A lightweight, single-container VM</td>
+                </tr>
+                <tr>
+                    <td><code>SandboxTemplate</code></td>
+                    <td>Reusable blueprint: image, resource limits, isolation runtime, policies</td>
+                    <td>A PodTemplate, but agent-aware</td>
+                </tr>
+                <tr>
+                    <td><code>SandboxClaim</code></td>
+                    <td>Transactional request for a sandbox from a template; decouples users from provisioning logic</td>
+                    <td>A PVC claim, but for environments</td>
+                </tr>
+                <tr>
+                    <td><code>SandboxWarmPool</code></td>
+                    <td>Pre-warmed pool of pods for near-instant allocation</td>
+                    <td>A warm connection pool, but for compute</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p>The <code>Sandbox</code> resource looks almost like a regular Pod — intentionally so. You don't need to learn an alien API:</p>
+
+    <pre><code>apiVersion: agents.x-k8s.io/v1alpha1
+kind: Sandbox
+metadata:
+  name: dynamic-ephemeral-sandbox
+spec:
+  replicas: 1
+  shutdownPolicy: Delete
+  shutdownTime: "${SHUTDOWN_TIME}"
+  podTemplate:
+    spec:
+      containers:
+      - name: workspace
+        image: alpine:latest
+        command: ["sleep", "infinity"]</code></pre>
+
+    <p>But under the hood, this simple manifest gets you a workload with <strong>stable identity, persistent storage, lifecycle controls, and optional VM-grade isolation</strong> — none of which you'd get from a raw Pod or Deployment without significant effort.</p>
+
+    <p>Google is already running this in production. At I/O 2026, they <a href="https://cloud.google.com/blog/products/containers-kubernetes/bringing-you-agent-sandbox-on-gke-and-agent-substrate" target="_blank" rel="noopener">announced 16x growth in GKE Agent Sandbox usage</a> in under five months, with customers like <strong>LangChain</strong> and <strong>Lovable</strong> deploying millions of agents. The open-source project has also reached GA stability, making it ready for production environments.</p>
+</section>
+
+<!-- Section 3: Core Features -->
+<section class="section" id="features">
+    <div class="section-header">
+        <div class="section-number">3</div>
+        <div class="section-title-group">
+            <h2>Core Features: Beyond the One-Liner</h2>
+            <p>What each feature actually does, why it matters, and how to configure it.</p>
+        </div>
+    </div>
+
+    <img src="../images/data_center.jpg" alt="Data Center" class="section-image">
+
+    <p>In my original Telegram post, I listed these features as bullet points. For a blog, we go deeper. Each feature below includes a real-world scenario, a configuration snippet, and the production angle you actually care about.</p>
+
+    <h3>3.1 Stable Network Identity & Routing</h3>
+    <p>Every <code>Sandbox</code> gets a <strong>stable hostname and network identity</strong> that persists across pod restarts, rescheduling, and even hibernation. This is not a headless Service workaround — it's built into the resource itself.</p>
+
+    <p><strong>Why this matters:</strong> Multi-agent systems need to discover and talk to each other. If Agent A needs to call Agent B, it needs a DNS name that doesn't change when the underlying pod gets evicted or rescheduled. In traditional Kubernetes, you'd build a headless Service + StatefulSet combo. With Agent Sandbox, it's a first-class property.</p>
+
+    <p>Traffic routing is handled by the <strong>Sandbox Router</strong> — a high-speed proxy that reads the <code>X-Sandbox-ID</code> header and routes traffic to the correct internal Pod IP. This means external clients can address sandboxes directly without needing per-sandbox Services.</p>
+
+    <pre><code>apiVersion: agents.x-k8s.io/v1alpha1
+kind: Sandbox
+metadata:
+  name: agent-a
+spec:
+  podTemplate:
+    spec:
+      containers:
+      - name: agent
+        image: my-agent:latest
+        ports:
+        - containerPort: 8080
+---
+# The router automatically routes traffic with X-Sandbox-ID: agent-a
+# No manual Service or Ingress needed for basic inter-agent communication</code></pre>
+
+    <p><strong>Production use case:</strong> A distributed data pipeline where a "coordinator" agent dispatches tasks to "worker" agents. Workers come and go based on load, but the coordinator always reaches them via stable DNS. No service mesh required.</p>
+
+    <h3>3.2 Persistent Volumes That Survive Everything</h3>
+    <p>Agent workloads are inherently stateful. An agent installs packages, writes files, clones repos, and builds artifacts. When the pod restarts — whether due to eviction, node maintenance, or a failed health check — that state must survive.</p>
+
+    <p>Agent Sandbox integrates with standard Kubernetes storage but adds <strong>volume migration across nodes</strong>. When a sandbox is rescheduled to a different node, its PVC is detached and re-attached to the new pod automatically. No manual intervention. No init containers restoring from S3.</p>
+
+    <pre><code>apiVersion: agents.x-k8s.io/v1alpha1
+kind: Sandbox
+metadata:
+  name: coding-agent
+spec:
+  podTemplate:
+    spec:
+      containers:
+      - name: workspace
+        image: python:3.12-slim
+        volumeMounts:
+        - name: workspace-data
+          mountPath: /workspace
+  volumeClaimTemplates:
+  - metadata:
+      name: workspace-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi</code></pre>
+
+    <p><strong>Production use case:</strong> A coding assistant that runs <code>pip install</code> and clones a monorepo on first start. Without persistent volumes, every restart means reinstalling dependencies. With Agent Sandbox, the environment is warm and ready even after node migration.</p>
+
+    <h3>3.3 Scheduled Deletion & Lifecycle Management</h3>
+    <p>Agents are not web servers. They may be idle for hours between tasks. Leaving them running burns money and cluster resources. But destroying them loses state.</p>
+
+    <p>Agent Sandbox provides <strong>declarative lifecycle controls</strong>:</p>
+    <ul>
+        <li><strong>Scheduled deletion</strong> — Set a TTL via <code>shutdownTime</code> and <code>shutdownPolicy</code>. The controller automatically cleans up the sandbox when time expires.</li>
+        <li><strong>Pause / Resume (Hibernation)</strong> — Scale the pod to zero while preserving the PVC. On the next API call or network connection, the controller re-provisions the pod and re-mounts the same volume.</li>
+    </ul>
+
+    <pre><code>apiVersion: agents.x-k8s.io/v1alpha1
+kind: Sandbox
+metadata:
+  name: ephemeral-analyzer
+spec:
+  shutdownPolicy: Delete
+  shutdownTime: "2026-05-28T02:00:00Z"
+  podTemplate:
+    spec:
+      containers:
+      - name: analyzer
+        image: analytics-runtime:latest</code></pre>
+
+    <p><strong>Production use case:</strong> A customer support agent that wakes up when a new ticket arrives, processes it, and then hibernates. You pay for compute only during active work, but state (ticket history, cached embeddings) is preserved. This is <strong>Agentic FinOps</strong> in action.</p>
+
+    <h3>3.4 Snapshots & Native Branching</h3>
+    <p>One of the most underappreciated features: <strong>snapshots</strong>. The controller can capture the full state of a running sandbox and restore it later. On GKE, this leverages <a href="https://cloud.google.com/kubernetes-engine/docs/concepts/machine-learning/agent-sandbox" target="_blank" rel="noopener">GKE Pod Snapshots</a> for full checkpoint/restore of running pods — including CPU and GPU workloads.</p>
+
+    <p>This gives you <strong>native branching of agent runtime</strong>. Imagine an agent that explores multiple solution paths: you snapshot at a decision point, try path A, roll back, try path B. No container image rebuilds. No complex Git state management.</p>
+
+    <pre><code># Snapshot a sandbox at a critical point
+kubectl apply -f - &lt;&lt;EOF
+apiVersion: agents.x-k8s.io/v1alpha1
+kind: SandboxSnapshot
+metadata:
+  name: agent-before-deployment
+spec:
+  sandboxRef:
+    name: deploy-agent
+EOF
+
+# Later, restore from snapshot to branch the runtime
+# The controller recreates the pod with identical filesystem and memory state</code></pre>
+
+    <p><strong>Production use case:</strong> CI/CD agents that test deployment strategies. Snapshot before a risky canary, run the canary, roll back if metrics degrade. All within seconds, not minutes.</p>
+
+    <h3>3.5 SandboxWarmPool: Sub-Second Cold Starts</h3>
+    <p>The <code>SandboxWarmPool</code> extension pre-provisions a pool of "warm" pods. When a new sandbox is requested, the controller hands over an existing warm pod instead of scheduling a new one from scratch.</p>
+
+    <p>Google reports <strong>sub-second latency</strong> for fully isolated agent workloads and up to a <strong>90% improvement over cold starts</strong>. For interactive agents — chatbots, coding assistants, real-time analytics — this is the difference between "feels instant" and "feels broken."</p>
+
+    <pre><code>apiVersion: agents.x-k8s.io/v1alpha1
+kind: SandboxWarmPool
+metadata:
+  name: python-runtime-pool
+spec:
+  templateRef:
+    name: python-sandbox-template
+  minSize: 5
+  maxSize: 50
+  scaleUpThreshold: 2
+  scaleDownDelay: 300</code></pre>
+
+    <p><strong>Production use case:</strong> A code execution API serving thousands of concurrent users. Each user gets their own isolated sandbox. Without warm pools, you'd have a queue during traffic spikes. With warm pools, users get their environment in under a second.</p>
+
+    <div class="highlight-box">
+        <h4>Performance Numbers from Google Cloud</h4>
+        <p>GKE Agent Sandbox delivers <strong>300 sandboxes per second at sub-second latency</strong> on optimized node configurations. For context, a cold Docker container start on a busy cluster can take 10-30 seconds.</p>
+    </div>
+
+    <h3>3.6 VM-Grade Isolation via gVisor & Kata Containers</h3>
+    <p>Running untrusted, LLM-generated code in a standard container is like handing a loaded gun to a toddler and saying "don't pull the trigger." The code is unpredictable. It might delete files, exfiltrate data, or try to escape the container.</p>
+
+    <p>Agent Sandbox is <strong>runtime-agnostic</strong>. You can pair it with <a href="https://gvisor.dev/" target="_blank" rel="noopener">gVisor</a> for userspace kernel interception, or <a href="https://katacontainers.io/" target="_blank" rel="noopener">Kata Containers</a> for hardware-enforced microVM isolation. Both are configured via standard Kubernetes <code>runtimeClassName</code> — no proprietary lock-in.</p>
+
+    <pre><code>apiVersion: agents.x-k8s.io/v1alpha1
+kind: SandboxTemplate
+metadata:
+  name: secure-python-template
+spec:
+  runtimeClassName: gvisor
+  podTemplate:
+    spec:
+      containers:
+      - name: workspace
+        image: python:3.12-slim
+        resources:
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+      securityContext:
+        runAsNonRoot: true
+        readOnlyRootFilesystem: true</code></pre>
+
+    <p><strong>Production use case:</strong> A multi-tenant SaaS platform where customers upload Python scripts for data analysis. Each script runs in a gVisor-backed sandbox. Even if a malicious script attempts a container escape, it hits the gVisor userspace kernel — not the host kernel. Your security team sleeps better.</p>
+
+    <p>On GKE, this is even simpler: managed gVisor is built into <a href="https://cloud.google.com/kubernetes-engine/docs/concepts/machine-learning/agent-sandbox" target="_blank" rel="noopener">GKE Sandbox</a>, the same technology that secures Gemini itself.</p>
+
+    <h3>3.7 Programmatic SDK Integration</h3>
+    <p>And now, the killer feature. You don't need to write YAML by hand. You deploy sandboxes <strong>directly from your application code</strong> using the official Python or Go SDKs.</p>
+
+    <pre><code>from k8s_agent_sandbox import SandboxClient
+
+client = SandboxClient()
+
+sandbox = client.create_sandbox(
+    template="python-sandbox-template",
+    namespace="default",
+)
+try:
+    result = sandbox.commands.run("echo 'Hello from Agent Sandbox!'")
+    print(result.stdout)
+    # Hello from Agent Sandbox!
+finally:
+    sandbox.terminate()</code></pre>
+
+    <p>The Python SDK supports multiple connection modes:</p>
+    <ul>
+        <li><strong>Gateway Mode</strong> — For production: traffic flows through a Cloud Load Balancer and Kubernetes Gateway API.</li>
+        <li><strong>Tunnel Mode</strong> — For local development: uses <code>kubectl port-forward</code> under the hood.</li>
+        <li><strong>In-Cluster Mode</strong> — For workloads running inside the cluster: direct pod IP or cluster DNS.</li>
+        <li><strong>Async Client</strong> — For FastAPI, aiohttp, and async agent orchestrators.</li>
+    </ul>
+
+    <p><strong>Production use case:</strong> A LangChain-based agent that dynamically creates a sandbox for each user session, executes generated code inside it, streams results back, and terminates the sandbox on session end. All from Python. No YAML touchpoints for the application developer.</p>
+</section>
+
+<!-- Section 4: Architecture -->
+<section class="section" id="architecture">
+    <div class="section-header">
+        <div class="section-number">4</div>
+        <div class="section-title-group">
+            <h2>How It Works Under the Hood</h2>
+            <p>The claim model, warm pools, and routing in one flow.</p>
+        </div>
+    </div>
+
+    <p>Agent Sandbox follows the standard Kubernetes controller pattern. A user (or an application via SDK) creates a <code>SandboxClaim</code> against a <code>SandboxTemplate</code>. The controller resolves the claim by either:</p>
+
+    <ol>
+        <li>Handing over a pre-warmed pod from a <code>SandboxWarmPool</code> (fast path, &lt;1 second)</li>
+        <li>Provisioning a new pod from scratch (slow path, 10-30 seconds)</li>
+    </ol>
+
+    <p>Once assigned, the Sandbox Router provides a stable endpoint. External traffic hits the router with an <code>X-Sandbox-ID</code> header; the router tunnels to the correct Pod IP. The sandbox persists until its TTL expires, it's explicitly deleted, or it's hibernated due to idle timeout.</p>
+
+    <div class="decision-tree">
+        <span class="q">User / Agent Framework requests sandbox</span><br>
+        <span class="arrow">  ↓</span><br>
+        <span class="q">SandboxClaim</span> created against <span class="q">SandboxTemplate</span><br>
+        <span class="arrow">  ↓</span><br>
+        <span class="q">Controller checks SandboxWarmPool?</span><br>
+        <span class="arrow">  ├─ Yes → Hand over warm pod (&lt;1s) ──→ Ready</span><br>
+        <span class="arrow">  └─ No  → Schedule new pod ──→ Wait ──→ Ready</span><br>
+        <span class="arrow">  ↓</span><br>
+        <span class="q">Sandbox Router routes traffic via X-Sandbox-ID</span><br>
+        <span class="arrow">  ↓</span><br>
+        <span class="q">Agent runs → Idle → Hibernation (scale to 0, PVC kept)</span><br>
+        <span class="arrow">  ↓</span><br>
+        <span class="q">Resume on next request → Or delete on TTL expiry</span>
+    </div>
+
+    <p>This architecture decouples the <strong>user's intent</strong> ("I need a Python sandbox") from the <strong>infrastructure reality</strong> ("which node, which runtime, which pool"). Platform teams define templates and pools; developers just claim what they need.</p>
+</section>
+
+<!-- Section 5: Use Cases -->
+<section class="section" id="usecases">
+    <div class="section-header">
+        <div class="section-number">5</div>
+        <div class="section-title-group">
+            <h2>Real-World Use Cases</h2>
+            <p>Where Agent Sandbox shines today.</p>
+        </div>
+    </div>
+
+    <div class="card-grid">
+        <div class="card">
+            <div class="card-icon" style="background: rgba(59,130,246,0.2);">💻</div>
+            <h4>Code Execution APIs</h4>
+            <p>Run untrusted, LLM-generated code in isolated sandboxes. Ideal for code interpreters, analytics tools, and on-demand computation. Each request gets its own environment.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon" style="background: rgba(139,92,246,0.2);">🤖</div>
+            <h4>Coding Agents</h4>
+            <p>Autonomous agents that write, debug, and refactor code inside secure sandboxes with persistent dev tooling. State survives across iterations.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon" style="background: rgba(16,185,129,0.2);">🖥️</div>
+            <h4>Computer Use</h4>
+            <p>AI agents that interact with graphical desktops, browsers, and GUI apps inside isolated sandboxes. Think "agent-operated Chrome" for web tasks.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon" style="background: rgba(245,158,11,0.2);">🔄</div>
+            <h4>CI/CD Pipelines</h4>
+            <p>Isolated testing and validation environments for each PR. No more "works on my machine" — every build runs in a fresh, reproducible sandbox.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon" style="background: rgba(239,68,68,0.2);">📓</div>
+            <h4>Notebooks & Research</h4>
+            <p>Persistent JupyterLab or VS Code sessions for data scientists. Packages, datasets, and in-progress experiments survive restarts.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon" style="background: rgba(6,182,212,0.2);">🌐</div>
+            <h4>Multi-Agent Orchestration</h4>
+            <p>Coordinated agent swarms where each agent has stable identity and can discover peers via DNS. No service mesh complexity required.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Section 6: Production -->
+<section class="section" id="production">
+    <div class="section-header">
+        <div class="section-number">6</div>
+        <div class="section-title-group">
+            <h2>Production Considerations & Guardrails</h2>
+            <p>How not to get paged at 3 AM.</p>
+        </div>
+    </div>
+
+    <p>Agent Sandbox is powerful, but power without guardrails is just a faster way to break things. Here's what you need to think about before going to production.</p>
+
+    <h3>Network Security</h3>
+    <p>GKE Agent Sandbox implements a <strong>Default Deny</strong> network posture. Sandboxes cannot talk to unauthorized internal networks or the control plane by default. You define explicit egress/ingress rules in the <code>SandboxTemplate</code>.</p>
+
+    <pre><code>apiVersion: agents.x-k8s.io/v1alpha1
+kind: SandboxTemplate
+metadata:
+  name: restricted-python
+spec:
+  podTemplate:
+    spec:
+      containers:
+      - name: workspace
+        image: python:3.12-slim
+  networkPolicy:
+    egress:
+      - to:
+        - namespaceSelector:
+            matchLabels:
+              name: allowed-apis
+        ports:
+        - protocol: TCP
+          port: 443</code></pre>
+
+    <h3>Resource Quotas & OPA</h3>
+    <p>Standard Kubernetes resource quotas apply, but you should also enforce policies at admission. The project provides examples for <a href="https://agent-sandbox.sigs.k8s.io/docs/use-cases/examples/opa-gatekeeper/" target="_blank" rel="noopener">OPA Gatekeeper</a> and <a href="https://agent-sandbox.sigs.k8s.io/docs/use-cases/examples/secure-sandbox-vap/" target="_blank" rel="noopener">Validating Admission Policies</a> to prevent users from requesting sandbox templates with privileged security contexts or excessive resources.</p>
+
+    <h3>Monitoring & Observability</h3>
+    <p>The controller exports <strong>creation latency metrics</strong> and supports <strong>OpenTelemetry tracing</strong>. Track warm pool hit rates, hibernation cycles, and sandbox lifetime to optimize both cost and user experience.</p>
+
+    <h3>Node Groups & Taints</h3>
+    <p>Sandboxes with gVisor or Kata Containers have specific node requirements. Use Kubernetes node selectors, taints, and tolerations to dedicate node pools for sandbox workloads — keeping them off your production service nodes.</p>
+</section>
+
+<!-- Section 7: Community -->
+<section class="section" id="community">
+    <div class="section-header">
+        <div class="section-number">7</div>
+        <div class="section-title-group">
+            <h2>What the Community Is Saying</h2>
+            <p>Reviews, analyses, and early adopter feedback.</p>
+        </div>
+    </div>
+
+    <p>Agent Sandbox hasn't gone unnoticed. Here's what engineers, bloggers, and infrastructure vendors have said about it.</p>
+
+    <blockquote>
+        "Agent Sandbox fills a gap that raw Kubernetes primitives do not cover natively: managing long-running, stateful, singleton workloads with stable identity, lifecycle controls (pause, resume, scheduled deletion), and strong isolation for untrusted code execution." — <a href="https://northflank.com/blog/agent-sandbox-on-kubernetes" target="_blank" rel="noopener">Northflank Engineering Blog</a>
+    </blockquote>
+
+    <blockquote>
+        "If you give an AI Agent a terminal, you've given it a loaded gun. Kubernetes just built the safety lock." — <a href="https://pub.towardsai.net/kubernetes-agent-sandbox-7d1c4c356dbb" target="_blank" rel="noopener">Ramesh, Towards AI</a>
+    </blockquote>
+
+    <blockquote>
+        "By the end of 2026, 40% of enterprise applications are expected to run embedded task-specific agents. Mapping these unique agentic workloads to traditional Kubernetes primitives requires a new abstraction." — <a href="https://cloudnativenow.com/features/kubernetes-builds-a-sandbox-crd-for-ai-agents/" target="_blank" rel="noopener">Joab Jackson, Cloud Native Now</a>, citing Ben Wheatley (incident.io)
+    </blockquote>
+
+    <blockquote>
+        "The architectural model of consuming AI is shifting from stateless inference to stateful execution environments interacting with external tools. This is fundamentally changing the security posture required to operate these systems." — <a href="https://cloudnativenow.com/features/kubernetes-builds-a-sandbox-crd-for-ai-agents/" target="_blank" rel="noopener">Pradipta Banerjee, startup advisor</a>
+    </blockquote>
+
+    <blockquote>
+        "The Agent Sandbox CRD is a necessary foundation — not a complete answer. For organizations deploying AI agents with real autonomy in production, you still need behavioral awareness beyond the container boundary." — <a href="https://www.armosec.io/blog/what-is-ai-agent-sandboxing-kubernetes-native-enforcement-explained/" target="_blank" rel="noopener">Shauli Rozen, ARMO (Kubescape)</a>
+    </blockquote>
+
+    <p>Northflank, a container platform provider, has been running similar workloads in production since 2021 and notes that while Agent Sandbox provides the isolation primitive, surrounding infrastructure — autoscaling, multi-tenancy, bin-packing — still requires operational expertise.</p>
+
+    <p>On the adoption front, Google reports that <a href="https://cloud.google.com/blog/products/containers-kubernetes/bringing-you-agent-sandbox-on-gke-and-agent-substrate" target="_blank" rel="noopener">Lovable</a> — which empowers users to build apps and websites with AI — runs these AI-generated applications in GKE Agent Sandboxes because of the fast startup, fast scaling, and secure isolation. They process <strong>200,000+ new projects daily</strong>.</p>
+</section>
+
+<!-- Section 8: Roadmap -->
+<section class="section" id="roadmap">
+    <div class="section-header">
+        <div class="section-number">8</div>
+        <div class="section-title-group">
+            <h2>Google I/O 2026 & The Roadmap Ahead</h2>
+            <p>From GA to Agent Substrate: what's next.</p>
+        </div>
+    </div>
+
+    <img src="../images/neural_network.jpg" alt="Neural Network" class="section-image">
+
+    <p>At <a href="https://io.google/2026/explore" target="_blank" rel="noopener">Google I/O 2026</a>, Agent Sandbox wasn't just mentioned in passing. It was positioned as a foundational layer for Google's broader agent strategy:</p>
+
+    <ul>
+        <li><strong>GKE Agent Sandbox is now GA</strong> — Generally available with managed controller lifecycle, automatic upgrades, and security patches.</li>
+        <li><strong>Managed Agents API</strong> — Google's new "agent-as-a-service" offering uses Agent Sandbox under the hood for secure, ephemeral execution environments.</li>
+        <li><strong>Antigravity 2.0 & CLI</strong> — Google's agent-first development platform now includes built-in terminal sandboxing and hardened Git policies, with Agent Sandbox as the runtime.</li>
+    </ul>
+
+    <p>But Google didn't stop there. They also introduced <strong>Agent Substrate</strong> — a new open-source project aimed at pushing the limits of agentic infrastructure density. While standard Kubernetes is optimized for thousands of long-running services, Agent Substrate is designed for <strong>millions of sub-second tool calls</strong> that would otherwise overwhelm a standard control plane.</p>
+
+    <p>The SIG-Apps roadmap also includes:</p>
+    <ul>
+        <li><strong>Firecracker & QEMU Support</strong> — Hardware-level MicroVM isolation for the Sandbox API.</li>
+        <li><strong>Ray & CrewAI Integration</strong> — Native plug-and-play support for popular agent frameworks.</li>
+        <li><strong>Pydantic-based Process Isolation</strong> — Lighter-weight sandboxing where full kernel isolation isn't required.</li>
+        <li><strong>Memory Sharing</strong> — Exploring memory sharing across sandboxes on the same host for homogeneous workloads.</li>
+    </ul>
+
+    <p>In short: this is not a flash-in-the-pan SIG project. It's the beginning of a fundamental shift in how Kubernetes thinks about workloads.</p>
+</section>
+
+<!-- Section 9: Summary -->
+<section class="section" id="summary">
+    <div class="summary-section">
+        <h2>Key Takeaways</h2>
+        <div class="summary-grid">
+            <div class="summary-item">
+                <div class="summary-num">1</div>
+                <p><strong>Stop hacking.</strong> Deployments and StatefulSets were never meant for agent workloads. Agent Sandbox is the first native primitive designed for stateful, singleton, isolated runtimes.</p>
+            </div>
+            <div class="summary-item">
+                <div class="summary-num">2</div>
+                <p><strong>Sub-second starts.</strong> SandboxWarmPool eliminates cold starts with pre-warmed pods — up to 90% faster than provisioning from scratch.</p>
+            </div>
+            <div class="summary-item">
+                <div class="summary-num">3</div>
+                <p><strong>Isolation is a choice.</strong> gVisor, Kata Containers, or standard runtimes — configured via <code>runtimeClassName</code>, not proprietary APIs.</p>
+            </div>
+            <div class="summary-item">
+                <div class="summary-num">4</div>
+                <p><strong>State survives everything.</strong> Persistent volumes, snapshots, hibernation, and resume mean agents pick up exactly where they left off.</p>
+            </div>
+            <div class="summary-item">
+                <div class="summary-num">5</div>
+                <p><strong>Production-ready.</strong> GA on GKE, open-source and community-driven, with SDKs for Python and Go.</p>
+            </div>
+            <div class="summary-item">
+                <div class="summary-num">6</div>
+                <p><strong>Do a PoC.</strong> If you're still running agents in DinD sidecars or StatefulSet hacks, it's time to build a demo and show your architect.</p>
+            </div>
+        </div>
+    </div>
+
+    <h3>Where to Start</h3>
+    <ul>
+        <li><a href="https://agent-sandbox.sigs.k8s.io/docs/getting_started/" target="_blank" rel="noopener">Official Getting Started Guide</a></li>
+        <li><a href="https://github.com/kubernetes-sigs/agent-sandbox" target="_blank" rel="noopener">GitHub Repository</a></li>
+        <li><a href="https://kubernetes.io/blog/2026/03/20/running-agents-on-kubernetes-with-agent-sandbox/" target="_blank" rel="noopener">Kubernetes Blog: Running Agents on Kubernetes with Agent Sandbox</a></li>
+        <li><a href="https://cloud.google.com/kubernetes-engine/docs/concepts/machine-learning/agent-sandbox" target="_blank" rel="noopener">GKE Agent Sandbox Documentation</a></li>
+        <li><a href="https://agent-sandbox.sigs.k8s.io/docs/use-cases/examples/" target="_blank" rel="noopener">Examples & Runtime Templates</a></li>
+    </ul>
+
+    <p>Happy sandboxing, colleagues. May your agents be isolated, your pools warm, and your cold starts a thing of the past. 🛡️</p>
+</section>
+
+</main>
+
+<footer class="footer">
+    <p>AI vs DevOps Blog by Eugene Burachevskiy</p>
+    <p>Original Telegram post expanded into long-form. All opinions are my own.</p>
+</footer>
+
+</body>
+</html>
