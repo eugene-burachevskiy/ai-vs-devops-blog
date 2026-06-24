@@ -851,6 +851,48 @@ spec:
         <p>Honest but well-framed: <strong>AWS-deep</strong> (8+ yrs), <strong>Azure moderate</strong> (AKS, ACR, Functions, Key Vault, DevOps &mdash; built dev environments from scratch), <strong>GKE real</strong> (Chorus One + contractor collaboration) plus lighter GCP. Emphasize: K8s abstracts many cloud differences, and your DR/architecture thinking transfers across providers. Reference certs if you hold any.</p>
     </div>
 
+    <!-- SECTION 15 -->
+    <div class="section">
+        <h2>&#x1F6E0;&#xFE0F; 15. Failure Protection Patterns in Distributed Systems</h2>
+        <p>Failures are inevitable in distributed systems. The question is not <em>if</em> things fail but <em>how gracefully</em> and <em>how quickly</em> they recover. These patterns are layered &mdash; circuit breaker wraps retries with backoff, timeouts cap retries, bulkheads isolate the breaker's own resource pool.</p>
+
+        <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Pattern</th><th>What it does</th><th>Example</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Retry</strong></td><td>Re-attempt failed operation (idempotent ops only)</td><td>HTTP 503 &rarr; retry 3x</td></tr>
+                <tr><td><strong>Backoff</strong></td><td>Increase delay between retries (linear, exponential, jittered)</td><td>100ms &rarr; 200ms &rarr; 400ms &rarr; 800ms</td></tr>
+                <tr><td><strong>Circuit Breaker</strong></td><td>Stop calling a failing dependency after threshold; periodically test if recovered</td><td>5 failures in 30s &rarr; open circuit &rarr; reject fast</td></tr>
+                <tr><td><strong>Timeout</strong></td><td>Maximum wait before giving up; prevents resource exhaustion</td><td>Connect 5s, request 30s</td></tr>
+                <tr><td><strong>Rate Limiting</strong></td><td>Cap requests per time window; protects downstream</td><td>100 req/s per tenant; 429 above</td></tr>
+                <tr><td><strong>Bulkhead</strong></td><td>Isolate resources so one failing component doesn't consume all threads/connections</td><td>Thread pool per downstream service</td></tr>
+                <tr><td><strong>Fallback</strong></td><td>Provide degraded response when primary fails</td><td>Serve stale cache; static page</td></tr>
+                <tr><td><strong>Graceful Degradation</strong></td><td>Shed non-critical features under load</td><td>Disable recommendations; keep checkout</td></tr>
+                <tr><td><strong>Throttling</strong></td><td>Slow down at source when downstream signals overload (backpressure)</td><td>TCP window; Reactive Streams</td></tr>
+                <tr><td><strong>Idempotency</strong></td><td>Same operation repeated = same result; enables safe retries</td><td>Idempotency key on payment API</td></tr>
+                <tr><td><strong>Load Shedding</strong></td><td>Drop low-priority requests under overload to keep critical path alive</td><td>Drop /analytics; preserve /checkout</td></tr>
+                <tr><td><strong>Fail-fast</strong></td><td>Immediately reject if system knows it can't serve (vs timing out later)</td><td>Return 503 at ingress on health fail</td></tr>
+                <tr><td><strong>Dead Letter Queue</strong></td><td>Route failed messages to a side queue for inspection/replay</td><td>Kafka DLQ for poison messages</td></tr>
+                <tr><td><strong>Saga</strong></td><td>Roll back multi-step distributed ops via compensating actions</td><td>Book flight &rarr; book hotel; hotel fails &rarr; cancel flight</td></tr>
+                <tr><td><strong>Health Check</strong></td><td>Continuously probe dependencies; route away from unhealthy</td><td>LB removes dead backend on probe fail</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h3>How these relate to the DR assessment</h3>
+        <p>When reviewing a ~300 app estate for resilience, these patterns are what you look for <strong>at the application and integration layers</strong>. Key assessment questions:</p>
+        <ul>
+            <li><strong>Are there retry-with-backoff policies</strong> on inter-service calls? Without them, transient failures become outages.</li>
+            <li><strong>Are circuit breakers configured?</strong> Istio DestinationRules provide them; if missing, a slow service cascades.</li>
+            <li><strong>Are there timeouts</strong> on all outbound calls? Default timeouts can be 0 (infinite) in many libraries.</li>
+            <li><strong>Is there rate limiting</strong> on critical paths? API Gateway / APIM should enforce it.</li>
+            <li><strong>Do apps have fallbacks</strong> for dependency failures? Or does everything fail hard?</li>
+            <li><strong>Are message queues durable?</strong> If TIBCO EMS or Kafka is lost, are in-flight messages recoverable?</li>
+            <li><strong>Is idempotency enforced</strong> on payment/transaction APIs? Critical for safe retries in failover scenarios.</li>
+        </ul>
+        <p>These patterns are the <em>implementation</em> side of resilience. A DR runbook that says "the app will failover to region B" is meaningless if the app has no retry/backoff/timeout configured and hangs on the dead connection.</p>
+    </div>
+
 </main>
 
 <footer class="footer">
