@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Solutions Architect — Interview Study Guide</title>
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://eugene-burachevskiy.github.io/ai-vs-devops-blog/articles/cloud-architect-interview-prep.html">
+    <meta property="og:title" content="Cloud Solutions Architect — Interview Study Guide">
+    <meta property="og:description" content="Comprehensive study guide for a DR review engagement interview covering GKE, AKS, Istio, Azure DR, TIBCO, and dependency mapping for a FTSE100 insurer.">
+    <meta property="og:image" content="https://eugene-burachevskiy.github.io/ai-vs-devops-blog/images/hero_ai.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Cloud Solutions Architect — Interview Study Guide">
+    <meta name="twitter:description" content="Comprehensive study guide for a DR review engagement interview covering GKE, AKS, Istio, Azure DR, TIBCO, and dependency mapping for a FTSE100 insurer.">
+    <meta name="twitter:image" content="https://eugene-burachevskiy.github.io/ai-vs-devops-blog/images/hero_ai.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --bg-code: #0d1117;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --border-color: #1e293b;
+            --border-light: #334155;
+            --gradient-1: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+            --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+        .back-btn {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            background: rgba(10,14,26,0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .hero {
+            position: relative;
+            min-height: 35vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(10,14,26,0.8) 0%, rgba(10,14,26,0.95) 100%);
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            padding: 2rem;
+            text-align: center;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--accent-red);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        .hero h1 {
+            font-size: clamp(1.3rem, 3.5vw, 2.2rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 1.5rem;
+        }
+        .hero-meta {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        .section {
+            padding: 2.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        .section:last-child { border-bottom: none; }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        h3 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin: 2rem 0 1rem;
+            color: var(--text-primary);
+        }
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.75rem;
+            color: var(--accent-cyan);
+        }
+        p {
+            margin-bottom: 1.25rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        strong { color: var(--text-primary); font-weight: 600; }
+
+        a { color: var(--accent-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        blockquote {
+            background: var(--bg-card);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: var(--text-primary);
+            position: relative;
+        }
+        blockquote::before {
+            content: '"';
+            font-size: 4rem;
+            color: var(--accent-blue);
+            opacity: 0.2;
+            position: absolute;
+            top: -0.5rem;
+            left: 1rem;
+            font-family: Georgia, serif;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        thead { background: var(--bg-secondary); }
+        th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-light);
+            white-space: nowrap;
+        }
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        tbody tr:hover { background: rgba(59,130,246,0.05); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            position: relative;
+            font-size: 0.8rem;
+        }
+        pre::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            border-radius: 12px 12px 0 0;
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.6;
+        }
+        pre code { color: #e2e8f0; }
+        :not(pre) > code {
+            background: rgba(59,130,246,0.1);
+            color: var(--accent-cyan);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        ul, ol {
+            margin: 1.25rem 0;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        li::marker { color: var(--accent-blue); }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(139,92,246,0.1) 100%);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .highlight-box p { margin-bottom: 0.5rem; }
+        .highlight-box p strong { color: var(--accent-blue); }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(245,158,11,0.08) 100%);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .warning-box p strong { color: var(--accent-red); }
+
+        .footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .tag-red, .tag-orange, .tag-green, .tag-yellow {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.25rem;
+        }
+        .tag-red { background: rgba(239,68,68,0.15); color: var(--accent-red); }
+        .tag-orange { background: rgba(245,158,11,0.15); color: var(--accent-orange); }
+        .tag-green { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+        .tag-yellow { background: rgba(245,158,11,0.15); color: var(--accent-orange); }
+
+        .gap-heading { color: var(--accent-red); }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.3rem; }
+            .back-btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<a href="../index.html" class="back-btn">&larr; Back to Blog</a>
+
+<header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <div class="hero-badge">&#x1F512; Private &mdash; Interview Prep</div>
+        <h1>Cloud Solutions Architect &#8212; Interview Study Guide</h1>
+        <p class="hero-subtitle">FTSE100 Insurer &#8226; DR Review Engagement &#8226; Azure + GCP + Istio</p>
+        <div class="hero-meta">
+            <span>&#x23F1;&#xFE0F; ~30 min read</span>
+            <span>&#x1F4CB; 14 Sections</span>
+            <span>&#x1F1EC;&#x1F1E7; English</span>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <div class="highlight-box">
+        <p><strong>Context:</strong> 10-week paper-based DR assessment (no live testing). ~300 apps, regulated financial services. Role is consulting/architecture review, not hands-on DevOps.</p>
+        <p><strong>Your gaps to watch:</strong> GCP depth (you have several months), Azure depth (2 yrs), explicit HA/DR architecture ownership in FS, DR runbook authoring, Istio from a DR lens.</p>
+        <p><strong>Your strong cards:</strong> 18 yrs IT, 10 yrs DevOps, real Istio production experience (Leveris banking), financial services (Leveris core banking, Kyriba), TIBCO ActiveMatrix (Seavus telecom), all three K8s distributions.</p>
+    </div>
+
+    <!-- SECTION 0 -->
+    <div class="section">
+        <h2>&#x1F3AF; 0. FRAMING &mdash; What This Role Actually Is</h2>
+        <p>This is <strong>NOT</strong> a build/configure DevOps role. It is a <strong>consulting/architecture review</strong> role. You will:</p>
+        <ul>
+            <li>Read existing architecture docs, DR runbooks, and test evidence</li>
+            <li>Critically assess resilience across GKE, AKS, Istio, TIBCO, APIM, Azure DevOps, Cognitive Services, Ratabase</li>
+            <li>Map cross-system failure propagation across ~300 apps</li>
+            <li>Write defensible findings for a board-level (FTSE100) audience</li>
+        </ul>
+        <p><strong>The interviewer is testing:</strong> Can you think like an architect who has operated these systems, not just read about them? Can you critically assess, not just configure? Do you understand DR <em>trade-offs</em> (RTO/RPO, cost, complexity)?</p>
+    </div>
+
+    <!-- SECTION 1 -->
+    <div class="section">
+        <h2>&#x1F6E1;&#xFE0F; 1. Disaster Recovery Fundamentals</h2>
+
+        <h3>Q1.1 — How would you structure a DR review/assessment for a cloud estate?</h3>
+        <p><strong class="tag-green">Strong answer:</strong></p>
+        <ol>
+            <li><strong>Scope &amp; tiering</strong> — Inventory all ~300 apps/services, classify into DR tiers by business criticality. Not everything gets active-active.</li>
+            <li><strong>Define metrics per tier</strong> — RTO (Recovery Time Objective = how fast back), RPO (Recovery Point Objective = how much data loss tolerable). Insurance claims/policy = RTO minutes; analytics = RTO days.</li>
+            <li><strong>Current-state review</strong> — Architecture diagrams, existing DR runbooks, last test evidence, dependency maps. Gap: what's undocumented, untested.</li>
+            <li><strong>Dependency mapping</strong> — Upstream/downstream for each critical app. Single points of failure. Cascading failure paths.</li>
+            <li><strong>Scenario assessment</strong> — Walk through: AZ loss, region loss, service outage, dependency outage (e.g., TIBCO down &rarr; what breaks?).</li>
+            <li><strong>Identify gaps</strong> — Missing runbooks, untested failover, stale backups, missing cross-region replication, RPO violations.</li>
+            <li><strong>Recommendations</strong> — Prioritized, cost-aware, with remediation effort and risk rating.</li>
+            <li><strong>Test strategy</strong> — DR drill cadence (game days), chaos engineering, evidence capture.</li>
+        </ol>
+        <p><strong>Keywords:</strong> RTO/RPO, DR tiers, dependency mapping, SPOF, blast radius, recovery walkthrough, cascading failure.</p>
+
+        <h3>Q1.2 — RTO vs RPO: how do they drive architecture?</h3>
+        <ul>
+            <li><strong>RPO:</strong> Max acceptable data loss (time). Drives <strong>backup frequency / replication</strong>. RPO=0 &rarr; synchronous replication. RPO=15min &rarr; async acceptable.</li>
+            <li><strong>RTO:</strong> Max acceptable downtime (time). Drives <strong>recovery automation</strong>. RTO=minutes &rarr; active-active. RTO=hours &rarr; automated failover. RTO=days &rarr; restore from backup.</li>
+            <li><strong>Trade-off:</strong> RTO/RPO&rarr;0 = high cost &amp; complexity. Tiering lets you spend where it matters.</li>
+        </ul>
+        <p><strong>Example:</strong> Insurer claims system: RTO 4h, RPO 15min (regulatory). Analytics warehouse: RTO 24h, RPO 24h (fine).</p>
+
+        <h3>Q1.3 — What DR patterns exist and when to use them?</h3>
+        <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Pattern</th><th>RTO</th><th>RPO</th><th>Cost</th><th>When</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Backup &amp; Restore</strong></td><td>Hours&ndash;days</td><td>Hours</td><td>Low</td><td>Non-critical, data-loss tolerant</td></tr>
+                <tr><td><strong>Pilot Light</strong></td><td>Hours</td><td>Minutes</td><td>Low&ndash;med</td><td>Core data replicated, scale up on failover</td></tr>
+                <tr><td><strong>Warm Standby</strong></td><td>Minutes&ndash;hours</td><td>Seconds&ndash;min</td><td>Medium</td><td>Scaled-down replica, scale up</td></tr>
+                <tr><td><strong>Multi-Site Active-Active</strong></td><td>Near-zero</td><td>Near-zero</td><td>High</td><td>Mission-critical, regulatory</td></tr>
+                <tr><td><strong>Multi-Region Active-Passive</strong></td><td>Minutes</td><td>Seconds</td><td>Med&ndash;high</td><td>Tier-1 in finance (most common)</td></tr>
+            </tbody>
+        </table>
+        </div>
+        <p><strong>Refs:</strong> <a href="https://cloud.google.com/architecture/dr-architecture">GCP DR Guide</a> | <a href="https://learn.microsoft.com/en-us/azure/architecture/resiliency/">Azure Resiliency</a></p>
+    </div>
+
+    <!-- SECTION 2 -->
+    <div class="section">
+        <h2>&#x1FAA8; 2. Kubernetes Resilience — GKE &amp; AKS</h2>
+
+        <h3>Q2.1 — Design a HA Kubernetes cluster. GKE vs AKS specifics?</h3>
+        <p><strong>Control plane:</strong></p>
+        <ul>
+            <li><strong>GKE:</strong> Regional (multi-zone) control plane &mdash; 3 zones free. Zonal = single master = SPOF. <strong>Always regional for prod.</strong></li>
+            <li><strong>AKS:</strong> Free tier = single no-SLA master. For prod, use Availability Zones (3 AZs) + <strong>Standard</strong> (VM-backed) or <strong>Premium</strong> (99.9% SLA) tier.</li>
+        </ul>
+        <p><strong>Worker nodes:</strong></p>
+        <ul>
+            <li>Spread across <strong>3+ AZs</strong> with separate node pools (system pool, user pool, spot pool).</li>
+            <li><code>PodDisruptionBudget</code> (PDB) for voluntary evictions; <code>topologySpreadConstraints</code> or <code>podAntiAffinity</code> to distribute across zones/nodes.</li>
+            <li>Cluster autoscaler + HPA. Graceful shutdown: <code>terminationGracePeriodSeconds</code>, <code>preStop</code> hooks.</li>
+        </ul>
+
+        <h3>Q2.2 — What happens when a node fails? Walk through recovery.</h3>
+        <ol>
+            <li><strong>Detection:</strong> Node controller marks <code>NotReady</code> after <code>node-monitor-grace-period</code> (default 40s).</li>
+            <li><strong>Pod eviction:</strong> After <code>pod-eviction-timeout</code> (default 5m), pods scheduled for deletion &amp; reschedule.</li>
+            <li><strong>Stateful workloads:</strong> Pod won't reschedule until PVC reattaches. Zone-bound PVs <strong>prevent cross-zone failover</strong> &mdash; this is a common DR gap.</li>
+        </ol>
+        <div class="warning-box">
+            <p><strong>&#x26A0;&#xFE0F; Critical DR insight:</strong> Stateful workloads are hardest. Node loss &rarr; pod reschedule &rarr; PVC stuck if disk is zone-bound. Regional PDs (GKE: 2 zones) / zone-redundant storage (Azure ZRS) are essential for cross-zone failover.</p>
+        </div>
+
+        <h3>Q2.3 — Can a Kubernetes cluster survive region loss?</h3>
+        <ul>
+            <li><strong>Single cluster cannot</strong> survive region loss by itself.</li>
+            <li><strong>Multi-cluster, multi-region</strong> &mdash; Clusters in 2+ regions, global LB (GCP: Global HTTP(S) LB; Azure: Front Door).</li>
+            <li><strong>Cluster rebuild</strong> &mdash; GitOps (ArgoCD) rebuilds cluster from scratch in DR region. RTO = provision + restore data time.</li>
+            <li><strong>Backup:</strong> Velero backs up cluster resources + PVs to S3/GCS/Azure Storage; restore into new cluster.</li>
+            <li><strong>Stateful data:</strong> Replicate databases separately (read replicas, cross-region, PITR).</li>
+        </ul>
+
+        <h3>Q2.4 — GKE vs AKS: key architectural DR differences?</h3>
+        <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Aspect</th><th>GKE</th><th>AKS</th></tr></thead>
+            <tbody>
+                <tr><td>Control plane HA</td><td>Regional (3 zones) free</td><td>Paid tiers for SLA</td></tr>
+                <tr><td>AZ support</td><td>Regional node pools</td><td><code>--zones</code> / VMSS zones</td></tr>
+                <tr><td>Ingress</td><td>GCE Ingress, Cloud LB</td><td>NGINX, App Gateway, Front Door</td></tr>
+                <tr><td>Persistent storage</td><td>Regional PD (2 zones), Filestore</td><td>Azure Disk (LRS/ZRS), Azure Files, NetApp</td></tr>
+                <tr><td>Networking</td><td>VPC-native (alias IP)</td><td>Azure CNI, VNet integration</td></tr>
+                <tr><td>Identity</td><td>Workload Identity &rarr; GCP IAM</td><td>Managed Identity / AAD pod identity</td></tr>
+                <tr><td>Service mesh</td><td>Anthos Service Mesh (managed Istio)</td><td>Open Service Mesh (deprecated), Istio DIY</td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- SECTION 3 - ISTIO -->
+    <div class="section">
+        <h2>&#x1F534; 3. Istio Service Mesh — HARD REQUIREMENT</h2>
+        <div class="highlight-box">
+            <p><strong>&#x26A0;&#xFE0F; This is a hard requirement. Expect 3&ndash;5 questions. Frame everything through DR/resilience lens.</strong></p>
+        </div>
+
+        <h3>Q3.1 — Istio components &amp; SPOFs</h3>
+        <ul>
+            <li><strong>Data plane:</strong> Envoy proxies (sidecars) &mdash; handles mTLS, routing, retries, circuit breaking, telemetry.</li>
+            <li><strong>Control plane:</strong> <strong>Istiod</strong> (merged Pilot+Citadel+Galley since 1.5) &mdash; pushes config to Envoy, manages certs.</li>
+        </ul>
+        <p><strong>SPOFs:</strong></p>
+        <ul>
+            <li><strong>Istiod</strong> &mdash; horizontally scalable. If down, existing Envoy config persists (eventually consistent). <strong>BUT</strong> no new config pushes, and certs expire (default 24h TTL, rotate at 80%). If Istiod is down past expiry &rarr; <strong>mTLS breaks &rarr; mesh traffic fails.</strong> Critical DR scenario.</li>
+            <li><strong>Envoy sidecars</strong> &mdash; per-pod; sidecar failure = that pod's traffic fails.</li>
+            <li><strong>Ingress Gateway</strong> &mdash; multiple replicas across zones behind LB.</li>
+            <li><strong>Root CA</strong> &mdash; if lost, all certs invalid; need CA backup/DR.</li>
+        </ul>
+
+        <h3>Q3.2 — mTLS in Istio: how to assess from DR perspective?</h3>
+        <ul>
+            <li><strong>Identity:</strong> SPIFFE-based (SPIRE), derived from K8s service account.</li>
+            <li><strong>Modes:</strong> <code>DISABLE</code>, <code>SIMPLE</code> (one-way), <code>MUTUAL</code> (mTLS). Permissive (accepts both) for migration; Strict for prod.</li>
+            <li><strong>Policy:</strong> <code>PeerAuthentication</code> (mTLS per namespace/workload), <code>RequestAuthentication</code> (JWT).</li>
+        </ul>
+        <p><strong>DR questions an architect asks:</strong></p>
+        <ul>
+            <li>Is mTLS Strict everywhere? Permissive gaps = migration debt, security DR gap.</li>
+            <li>What's cert TTL and rotation? If control plane down, how long until certs expire?</li>
+            <li>Is the root CA backed up? Custom CA or Istio self-signed?</li>
+            <li>Partial mesh failure plan (some sidecars up, some down)?</li>
+            <li>Cross-cluster mTLS &mdash; shared root CA required; how distributed/backed up?</li>
+        </ul>
+        <pre>
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: istio-system
+spec:
+  mtls:
+    mode: STRICT</pre>
+
+        <h3>Q3.3 — VirtualServices &amp; DestinationRules for resilience</h3>
+        <p><strong>VirtualService</strong> &mdash; <em>how</em> to route (L7):</p>
+        <ul>
+            <li>Canary, blue-green, A/B via weights. Traffic shifting for failover.</li>
+            <li><strong>Retries:</strong> <code>retries: 3, perTryTimeout: 2s, retryOn: 5xx,reset</code></li>
+            <li><strong>Timeouts</strong> prevent cascading failures. <strong>Fault injection</strong> for chaos testing.</li>
+        </ul>
+        <p><strong>DestinationRule</strong> &mdash; <em>to whom</em> (subsets + traffic policy):</p>
+        <ul>
+            <li><strong>Subsets</strong> (e.g., v1, v2; region-a, region-b) &rarr; enables cross-region failover.</li>
+            <li><strong>Circuit breaking</strong> &mdash; connection pools, outlier detection (eject unhealthy).</li>
+            <li><strong>Locality LB</strong> &mdash; prefer local zone, failover to other zones/regions.</li>
+        </ul>
+        <pre>
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+spec:
+  http:
+  - route:
+    - destination:
+        host: payments.local
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: 5xx,reset,connect-refused,refused-stream
+    timeout: 10s
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+spec:
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        maxRequestsPerConnection: 10
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50</pre>
+
+        <h3>Q3.4 — Circuit breaking: how and why?</h3>
+        <p><strong>Outlier detection:</strong> Monitors each endpoint; N consecutive 5xx &rarr; eject for <code>baseEjectionTime</code>. Up to <code>maxEjectionPercent</code> ejected. Auto-reintroduced.</p>
+        <p><strong>Connection pools:</strong> <code>maxConnections</code>, <code>maxPendingRequests</code> prevent overload cascade. Limits hit &rarr; requests queue or fail fast.</p>
+        <p><strong>Why:</strong> Without circuit breaking, slow downstream backs up connections &rarr; cascading failure &rarr; total outage. CBR <strong>contains blast radius</strong>. Core to resilience.</p>
+
+        <h3>Q3.5 — Istio control-plane DR runbook</h3>
+        <p><strong>Assessment checklist:</strong></p>
+        <ol>
+            <li>Istiod replicas &mdash; multiple across AZs? HPA?</li>
+            <li>Resources adequate for mesh size?</li>
+            <li><strong>Certificate management</strong> &mdash; TTL, rotation window, CA backup. If certs expire, mesh dies.</li>
+            <li>Config backup &mdash; CRDs in Git (GitOps)?</li>
+            <li>Version &amp; upgrades &mdash; supported? Istio has aggressive deprecation.</li>
+            <li>Sidecar resource limits &mdash; undersized = latency/failure under load.</li>
+            <li>Observability &mdash; Kiali, Prometheus for mTLS health, config push success, sidecar drift.</li>
+        </ol>
+        <p><strong>Istiod loss runbook:</strong></p>
+        <ol>
+            <li>Detect (alerts on Istiod down).</li>
+            <li>Restore Istiod from Git (Helm/istioctl).</li>
+            <li>Verify sidecars retain last-good config (steady-state OK).</li>
+            <li>Verify cert rotation resumes before expiry.</li>
+            <li>Test config push, mTLS health.</li>
+        </ol>
+
+        <h3>Q3.6 — Multi-cluster Istio for DR</h3>
+        <ul>
+            <li><strong>Single mesh, multiple clusters</strong> &mdash; shared root CA, cross-cluster service discovery. Failover via DestinationRule <code>localityLbSetting</code>.</li>
+            <li><strong>Primary-remote:</strong> One Istiod controls all &mdash; simpler, single control plane.</li>
+            <li><strong>Multi-primary:</strong> Each cluster has Istiod; shared root CA, synced service registry. Most resilient.</li>
+            <li><strong>Gotcha:</strong> Shared root CA must be backed up. Cross-cluster service registry sync must be monitored.</li>
+        </ul>
+        <p><strong>Ref:</strong> <a href="https://istio.io/latest/docs/setup/install/multicluster/">istio.io/latest/docs/setup/install/multicluster/</a></p>
+    </div>
+
+    <!-- SECTION 4 -->
+    <div class="section">
+        <h2>&#x1F530; 4. Azure Platform DR</h2>
+
+        <h3>Q4.1 — Design for Azure regional failover</h3>
+        <ul>
+            <li><strong>Region pairs:</strong> Each Azure region has a paired region (e.g., North Europe &harr; West Europe). Prioritized recovery, sequential updates, 300-mile separation.</li>
+            <li><strong>Azure Site Recovery (ASR):</strong> VM replication to paired region; automated failover with runbooks.</li>
+            <li><strong>Front Door:</strong> Global L7 LB + WAF + URL routing. Multi-region active-active/active-passive with health probes.</li>
+            <li><strong>Traffic Manager:</strong> DNS-based distribution (priority, weighted, performance, geographic).</li>
+            <li><strong>For AKS:</strong> Clusters in paired regions; Front Door routes; state via Azure Storage GRS, Cosmos DB multi-region, SQL DB geo-replication.</li>
+        </ul>
+
+        <h3>Q4.2 — Azure APIM resilience &amp; DR</h3>
+        <ul>
+            <li><strong>Multi-region:</strong> APIM Premium supports multi-region gateway deployment; management plane in primary.</li>
+            <li><strong>Failover:</strong> Traffic Manager/Front Door routes to healthy regional gateway.</li>
+            <li><strong>Config DR:</strong> Config stored in primary region. Back up via API/ARM templates/Git. Premium supports self-hosted gateway (containerized, deploy to AKS).</li>
+            <li><strong>Common gaps:</strong> Config only in primary, no backup. Secrets not replicated (Key Vault dependency). Single-region. No tested failover runbook.</li>
+        </ul>
+
+        <h3>Q4.3 — Azure DevOps resilience</h3>
+        <ul>
+            <li>Managed SaaS; Microsoft handles HA. But org region matters &mdash; if West Europe is down, you can't deploy.</li>
+            <li><strong>Risk:</strong> Self-hosted agents in failed region &rarr; pipelines fail. Artifact storage region-bound &rarr; deployments blocked.</li>
+            <li><strong>Mitigations:</strong> Deploy agents across regions. Mirror artifacts externally (JFrog). Backup repos to GitHub/Storage. Pipeline YAML is Git-backed (good).</li>
+            <li><strong>Common gap:</strong> CI/CD capability recovery undocumented in DR plan.</li>
+        </ul>
+
+        <h3>Q4.4 — Azure Backup vs ASR</h3>
+        <ul>
+            <li><strong>Azure Backup:</strong> Data backup (VMs, files, SQL) to Recovery Services Vault. RPO-driven schedule. RTO = restore time. For data protection, ransomware, accidental deletion.</li>
+            <li><strong>ASR:</strong> Continuous VM replication to paired region; orchestrated failover. Lower RTO/RPO. For regional failover.</li>
+            <li><strong>Both:</strong> Backup for granular PITR; ASR for regional failover.</li>
+            <li><strong>Containers:</strong> Neither backs up AKS state natively &mdash; use <strong>Velero</strong>.</li>
+        </ul>
+
+        <h3>Q4.5 — Key Vault DR</h3>
+        <ul>
+            <li><strong>Soft delete</strong> (mandatory): 7&ndash;90 day retention. <strong>Purge protection</strong> prevents hard delete.</li>
+            <li><strong>No native cross-region replication.</strong> For DR: replicate secrets to paired region vault (automated scripting); or use managed identities + IaC to recreate.</li>
+            <li><strong>Assessment:</strong> If Key Vault is gone and AKS in DR region can't get secrets &rarr; app fails. Are secrets recoverable?</li>
+        </ul>
+    </div>
+
+    <!-- SECTION 5 -->
+    <div class="section">
+        <h2>&#x2618;&#xFE0F; 5. GCP Platform DR</h2>
+
+        <h3>Q5.1 — Global vs regional load balancing for DR</h3>
+        <ul>
+            <li><strong>Global External HTTP(S) LB:</strong> Anycast IP, single global IP, routes to nearest healthy backend across regions. <strong>Best for multi-region active-active.</strong> Health checks auto-remove failed regions.</li>
+            <li><strong>Cloud CDN</strong> for static content. <strong>Cloud Armor</strong> &mdash; WAF/DDoS, attaches to global LB.</li>
+            <li><strong>DR pattern:</strong> Global LB + backends in 2+ regions &rarr; automatic regional failover at LB layer. Core GCP multi-region DR.</li>
+            <li><strong>Regional LB:</strong> Single region only. Use Traffic Director for multi-region internal LB.</li>
+        </ul>
+
+        <h3>Q5.2 — GCS: region vs dual-region vs multi-region</h3>
+        <ul>
+            <li><strong>Region bucket:</strong> Lowest latency in-region; SPOF for region loss.</li>
+            <li><strong>Dual-region:</strong> 99.99% availability, geo-redundant across 2 regions. <strong>Best for DR-sensitive data.</strong></li>
+            <li><strong>Multi-region:</strong> 99.95&ndash;99.99%, geo-redundant across large geo (US, EU).</li>
+            <li><strong>Object Versioning + Lifecycle</strong> protects from accidental deletion.</li>
+            <li><strong>For DR:</strong> Backups (Velero, DB snapshots) use dual-region or cross-region replication.</li>
+        </ul>
+
+        <h3>Q5.3 — Cloud Armor in DR context</h3>
+        <ul>
+            <li>WAF (SQLi, XSS, L7 filter, geo-based, IP-based) + DDoS for GCP LBs.</li>
+            <li><strong>Standard vs Managed Protection Plus:</strong> Managed Plus for advanced DDoS, adaptive protection.</li>
+            <li><strong>DR fit:</strong> Prevents traffic-based incidents (DDoS, app-layer attacks); enables origin failover via LB backend policies.</li>
+        </ul>
+    </div>
+
+    <!-- SECTION 6 -->
+    <div class="section">
+        <h2>&#x1F517; 6. Integration Platforms — TIBCO &amp; APIM</h2>
+        <p><em>You have TIBCO ActiveMatrix experience at Seavus &mdash; leverage it directly.</em></p>
+
+        <h3>Q6.1 — TIBCO: DR/resilience assessment approach</h3>
+        <ul>
+            <li><strong>Clustering/HA:</strong> ActiveMatrix/BusinessWorks clustered? Nodes? Active-active or active-passive?</li>
+            <li><strong>Message persistence:</strong> EMS message store on durable storage? Queues/topics persistent? RPO if node dies?</li>
+            <li><strong>EMS FT servers:</strong> Primary-secondary pair with shared state; failover time = RTO component.</li>
+            <li><strong>Recovery paths:</strong> Documented? Tested? Recovery order: infra &rarr; TIBCO &rarr; flows &rarr; dependent apps.</li>
+            <li><strong>Config backup:</strong> Export EAR files, EMS configs to external store. Can you rebuild?</li>
+            <li><strong>Dependencies:</strong> TIBCO sits between apps &mdash; its failure cascades. Map inbound/outbound flows.</li>
+        </ul>
+
+        <h3>Q6.2 — Azure APIM: most likely DR gaps</h3>
+        <ul>
+            <li>Self-hosted gateway (containerized, deployable to AKS/anywhere) vs managed gateway (regional).</li>
+            <li><strong>Common gaps:</strong> Config only in primary, no backup. Named values/secrets not replicated. Single region. No tested failover. Backend pools not health-checked (APIM routes to dead backends).</li>
+        </ul>
+    </div>
+
+    <!-- SECTION 7 -->
+    <div class="section">
+        <h2>&#x1F578;&#xFE0F; 7. Dependency Mapping &amp; Failure Propagation (~300 apps)</h2>
+
+        <h3>Q7.1 — Approach for mapping dependencies across ~300 apps</h3>
+        <p><strong>Methodology:</strong></p>
+        <ol>
+            <li>Inventory &mdash; CMDB, ServiceNow, Dynatrace/Datadog service map.</li>
+            <li>Taxonomy &mdash; Apps, services, data stores, shared platforms (TIBCO, APIM, DBs), external deps.</li>
+            <li><strong>Top-down:</strong> Start from business processes (e.g., "file a claim"), trace through apps to infra. Prioritizes by business criticality.</li>
+            <li><strong>Bottom-up:</strong> Service mesh telemetry (Istio Kiali), APM (Dynatrace), VPC flow logs, DNS queries. Reveals <em>actual</em> vs documented dependencies.</li>
+            <li><strong>Visualization:</strong> Graph (Kiali, Graphviz, Neo4j). Critical path identification &mdash; shared deps = high blast radius.</li>
+            <li>Document failure scenarios: "TIBCO down" &rarr; list impacted apps; "Region A lost" &rarr; impacted services.</li>
+        </ol>
+        <p><strong>Red flags:</strong> Undocumented deps, shared SPOFs (one DB for 50 apps), circular dependencies, hidden external third-party APIs.</p>
+        <p><strong>Ref:</strong> TOGAF/ArchiMate notation; Istio Kiali, Dynatrace, Datadog Service Map, ServiceNow CMDB.</p>
+
+        <h3>Q7.2 — Blast radius: what is it and how to reduce?</h3>
+        <ul>
+            <li><strong>Blast radius:</strong> Extent of impact when a component fails. Large = single component takes down many services.</li>
+            <li><strong>Reduced by:</strong> Decoupling (async messaging, CBR), redundancy (multi-AZ/region), isolation (bulkheads), graceful degradation (fallbacks), backpressure (rate limiting).</li>
+            <li><strong>In mesh:</strong> Istio CBR + outlier detection contain failures. Without &rarr; cascade.</li>
+            <li><strong>In data:</strong> Separate DBs per service (no shared DB), read replicas.</li>
+        </ul>
+    </div>
+
+    <!-- SECTION 8 -->
+    <div class="section">
+        <h2>&#x1F5C4;&#xFE0F; 8. Database DR (Platform Context)</h2>
+        <p><em>JD says you provide platform context, not DB engineering. Focus on platform-level assessment.</em></p>
+
+        <h3>Q8.1 — PostgreSQL DR on GKE (Ratabase context)</h3>
+        <ul>
+            <li><strong>Cloud SQL for PostgreSQL:</strong> HA config (regional, sync standby in another zone, auto-failover). Cross-region read replica for DR.</li>
+            <li><strong>Self-managed on GKE</strong> (Ratabase case) &mdash; bigger DR risk. You manage replication, backups, failover.</li>
+            <li><strong>Assess:</strong> Backup strategy (pg_dump vs WAL archiving vs pgBackRest for PITR). Streaming replica (where? cross-zone? cross-region?). Failover automation (Patroni, Stolon). PV type (regional PD?).</li>
+            <li><strong>PITR:</strong> WAL archiving to object storage &rarr; restore to any point.</li>
+            <li><strong>RPO/RTO:</strong> Sync replica cross-zone = RPO 0, RTO minutes. Async cross-region = RPO seconds&ndash;min, RTO min&ndash;hours.</li>
+        </ul>
+
+        <h3>Q8.2 — Azure Cognitive Services resilience (~5 services)</h3>
+        <ul>
+            <li>Managed services &mdash; Microsoft handles intra-region HA.</li>
+            <li><strong>DR:</strong> Resource is regional. Redeploy in paired region (IaC). Custom data/models must be replicated/backed up.</li>
+            <li><strong>Multi-region:</strong> Deploy same services in paired region; route via Front Door. Active-active or active-passive.</li>
+        </ul>
+    </div>
+
+    <!-- SECTION 9 -->
+    <div class="section">
+        <h2>&#x1F50D; 9. Monitoring &amp; Observability for DR</h2>
+        <h3>Q9.1 — What observability is critical for DR readiness?</h3>
+        <ul>
+            <li><strong>Health probes</strong> &mdash; LB/APIM/Gateway health checks for regional/service failure detection.</li>
+            <li><strong>Synthetic monitoring</strong> (uptime checks) &mdash; proactive external detection.</li>
+            <li><strong>SLI/SLO dashboards</strong> &mdash; know when error budget burns.</li>
+            <li><strong>DR-specific:</strong> Replication lag (DB), cert expiry (Istio mTLS), backup success, failover runbook test results.</li>
+            <li><strong>Alerting:</strong> Multi-channel (PagerDuty), escalation, runbook links.</li>
+        </ul>
+        <p><strong>Assessment:</strong> Is observability sufficient to detect the failure scenarios in the DR plan? Many plans fail because alerts are noisy/ignored or too slow.</p>
+    </div>
+
+    <!-- SECTION 10 -->
+    <div class="section">
+        <h2>&#x1F4DD; 10. Consulting &amp; Delivery (Soft Skills)</h2>
+
+        <h3>Q10.1 — Present technical findings to a non-technical board?</h3>
+        <ul>
+            <li><strong>Lead with business impact</strong> (revenue, regulatory, customer), not tech.</li>
+            <li><strong>Risk rating</strong> (high/med/low) with quantified impact and concrete recommendations.</li>
+            <li><strong>Visuals</strong> &mdash; diagrams, heat maps, dependency graphs.</li>
+            <li><strong>Defensible</strong> &mdash; every finding backed by evidence (config, logs, test results).</li>
+            <li><strong>Prioritized</strong> &mdash; group and rank, not a dump of 200 findings.</li>
+        </ul>
+
+        <h3>Q10.2 — Handle disagreement with a customer architect?</h3>
+        <ul>
+            <li>Evidence-based, not opinion. Reference industry standards (NIST, CIS, cloud best practices, PRA/FCA for UK insurance).</li>
+            <li>Acknowledge their constraints (cost, legacy, org context).</li>
+            <li>Frame as risk, not failure: "This is a risk because&hellip;" not "This is wrong."</li>
+            <li>Document formally if needed.</li>
+        </ul>
+    </div>
+
+    <!-- SECTION 11 -->
+    <div class="section">
+        <h2>&#x1F3AD; 11. Scenarios You Should Practice Narrating</h2>
+        <p>Practice walking through each end-to-end:</p>
+        <ol>
+            <li><strong>"Azure region is lost"</strong> &mdash; Region pair failover, Front Door/Traffic Manager, AKS in DR (GitOps rebuild), DB geo-replication, Key Vault secrets in DR, APIM redeploy, DNS TTL.</li>
+            <li><strong>"GKE single zone fails"</strong> &mdash; Regional cluster (other zones serve), regional PDs, HPA reschedules, PDB protects quorum, Istio outlier detection ejects dead zone endpoints.</li>
+            <li><strong>"TIBCO is down"</strong> &mdash; Map dependent apps (from dependency map); async flows queue or fail; sync flows break &rarr; user impact. Recovery order: infra &rarr; TIBCO &rarr; flows.</li>
+            <li><strong>"Istiod is down"</strong> &mdash; Steady-state OK (Envoy has last config). But: no config pushes, certs expire (24h), no new routing. Restore from Git before expiry.</li>
+            <li><strong>"mTLS certs expiring during Istiod rebuild"</strong> &mdash; Race condition; mesh dies if certs expire before Istiod issues new. Mitigation: faster recovery, longer cert TTL, sidecar injection of new root CA.</li>
+            <li><strong>"PostgreSQL on GKE — ensure DR"</strong> &mdash; Regional PD, streaming replica cross-zone, WAL archiving to GCS dual-region, pgBackRest, Patroni auto-failover, tested restore drills.</li>
+        </ol>
+    </div>
+
+    <!-- SECTION 12 -->
+    <div class="section">
+        <h2>&#x1F4D6; 12. Key Terms — Be Fluent</h2>
+        <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+            <tbody>
+                <tr><td>RTO / RPO</td><td>Recovery Time / Point Objective</td></tr>
+                <tr><td>DR tier / DR runbook / DR drill</td><td>Service classification / Recovery steps / Test exercise</td></tr>
+                <tr><td>Blast radius / SPOF / cascading failure</td><td>Impact scope / Single point of failure / Chain reaction</td></tr>
+                <tr><td>AZ / region / region pair / multi-region</td><td>Physical isolation boundaries</td></tr>
+                <tr><td>Active-active / active-passive / pilot light</td><td>DR patterns by RTO/RPO</td></tr>
+                <tr><td>mTLS / SPIFFE / sidecar</td><td>Mutual TLS / Identity framework / Envoy proxy per pod</td></tr>
+                <tr><td>VirtualService / DestinationRule / PeerAuthentication</td><td>Istio CRDs for routing / Traffic policy / mTLS policy</td></tr>
+                <tr><td>ASR / Recovery Services Vault</td><td>Azure Site Recovery / Backup storage</td></tr>
+                <tr><td>Global LB / Cloud Armor / dual-region bucket</td><td>GCP multi-region LB / WAF / Geo-redundant storage</td></tr>
+                <tr><td>PITR / WAL / streaming replication / Patroni</td><td>PostgreSQL DR fundamentals</td></tr>
+                <tr><td>Velero / Kasten K10</td><td>K8s backup tools</td></tr>
+                <tr><td>Front Door / Traffic Manager</td><td>Azure global routing</td></tr>
+                <tr><td>NIST 800-34</td><td>US contingency planning standard</td></tr>
+                <tr><td>PRA SS2/21</td><td>UK insurance operational resilience regulation</td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- SECTION 13 -->
+    <div class="section">
+        <h2>&#x23F3; 13. Study Plan Tonight (Priority Order)</h2>
+        <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Priority</th><th>Topic</th><th>Time</th></tr></thead>
+            <tbody>
+                <tr><td>&#x1F534;</td><td><strong>Istio DR scenarios</strong> — cert expiry, Istiod loss, locality LB, outlier detection. Hard requirement.</td><td>2h</td></tr>
+                <tr><td>&#x1F534;</td><td><strong>GKE specifics</strong> — regional clusters, PDs, Cloud LB/Armor. Need to sound like you've run GKE at depth.</td><td>1.5h</td></tr>
+                <tr><td>&#x1F7E0;</td><td><strong>Azure DR stack</strong> — ASR, region pairs, Front Door, APIM multi-region, Key Vault, Azure DevOps gaps.</td><td>1.5h</td></tr>
+                <tr><td>&#x1F7E0;</td><td><strong>DR methodology</strong> — RTO/RPO, tiering, dependency mapping, runbook assessment.</td><td>1h</td></tr>
+                <tr><td>&#x1F7E1;</td><td>TIBCO resilience (refresh ActiveMatrix), PostgreSQL DR on GKE, PRA SS2/21.</td><td>2h</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h3>Key References</h3>
+        <ul>
+            <li><a href="https://istio.io/latest/docs/concepts/security/">Istio Security Docs</a> &mdash; mTLS, PeerAuthentication</li>
+            <li><a href="https://istio.io/latest/docs/tasks/traffic-management/circuit-breaker/">Istio Circuit Breaking</a></li>
+            <li><a href="https://cloud.google.com/architecture/dr-architecture">GCP DR Architecture</a></li>
+            <li><a href="https://learn.microsoft.com/en-us/azure/architecture/resiliency/">Azure Architecture Resiliency</a></li>
+            <li><a href="https://learn.microsoft.com/en-us/azure/reliability/cross-region-replication-azure">Azure Region Pairs</a></li>
+            <li><a href="https://istio.io/latest/docs/setup/install/multicluster/">Istio Multi-Cluster</a></li>
+            <li><a href="https://www.bankofengland.co.uk/prudential-regulation/publication/2021/march/operational-resilience-impact-tolerances-important-business-services-ss">PRA SS2/21</a></li>
+        </ul>
+    </div>
+
+    <!-- SECTION 14 -->
+    <div class="section">
+        <h2>&#x1F4AC; 14. Likely Opening Questions</h2>
+
+        <h3>"Tell us about your background and a recent HA/DR project you owned."</h3>
+        <p>Lead with <strong>Leveris</strong> (core banking, Istio production, multi-account AWS K8s DR build-out) and <strong>Chorus One</strong> (GKE HA multi-zone, DEX platform). Tie to <em>architectural ownership</em>, not just config. Mention you've worked across all three major K8s distributions.</p>
+
+        <h3>"Why are you interested in this DR review engagement?"</h3>
+        <p>Banking/fin-tech experience fits; Istio/multi-cloud/systems resilience is your specialization; enjoy architecture review and written deliverables; UK regulatory resilience is meaningful work. You have TIBCO experience directly relevant to their integration stack.</p>
+
+        <h3>"What's your experience with Azure and GCP specifically?"</h3>
+        <p>Honest but well-framed: <strong>AWS-deep</strong> (8+ yrs), <strong>Azure moderate</strong> (AKS, ACR, Functions, Key Vault, DevOps &mdash; built dev environments from scratch), <strong>GKE real</strong> (Chorus One + contractor collaboration) plus lighter GCP. Emphasize: K8s abstracts many cloud differences, and your DR/architecture thinking transfers across providers. Reference certs if you hold any.</p>
+    </div>
+
+</main>
+
+<footer class="footer">
+    <p>Interview Study Guide &mdash; Cloud Solutions Architect, FTSE100 Insurer</p>
+    <p>Private page &bull; Not for public sharing &bull; Eugene Burachevskiy</p>
+</footer>
+
+</body>
+</html>
