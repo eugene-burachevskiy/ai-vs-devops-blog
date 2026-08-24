@@ -30,38 +30,59 @@ Core thematic areas:
 ## 2. Visual Styling
 
 ### Design System
-The blog uses a custom dark theme. All CSS variables are standardized:
+The blog uses a custom dark theme ("dark sheet" design, August 2026 redesign). All CSS variables are standardized:
 
 ```css
---bg-primary: #0a0e1a;
+/* surfaces */
+--bg-primary: #0a0e1a;      /* page background */
 --bg-secondary: #111827;
 --bg-card: #1a1f2e;
---bg-code: #0d1117;
---text-primary: #f0f4f8;
---text-secondary: #94a3b8;
---text-muted: #64748b;
---accent-blue: #3b82f6;
---accent-cyan: #06b6d4;
---accent-purple: #8b5cf6;
---accent-green: #10b981;
+--bg-code: #0b101c;         /* code block surface */
+--bg-sheet-top: #161e31;    /* article sheet gradient start */
+--bg-sheet: #121929;        /* article sheet gradient end */
+/* text */
+--text-primary: #f0f4f8;    /* headings, strong */
+--text-body: #b9c5d8;       /* long-form body text */
+--text-secondary: #94a3b8;  /* subtitles, captions */
+--text-muted: #6e7f97;      /* meta, footer */
+/* accents (brightened for dark bg contrast) */
+--accent-blue: #60a5fa;
+--accent-blue-deep: #3b82f6;
+--accent-cyan: #22d3ee;
+--accent-purple: #a78bfa;
+--accent-green: #34d399;
 --accent-orange: #f59e0b;
---accent-red: #ef4444;
---border-color: #1e293b;
+--accent-red: #f87171;
+/* borders (translucent, sit softly on dark surfaces) */
+--border-color: rgba(148, 163, 184, 0.16);
+--border-light: rgba(148, 163, 184, 0.30);
+--border-faint: rgba(148, 163, 184, 0.09);
+/* effects */
+--gradient-1: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
+--shadow-glow: 0 8px 32px rgba(59, 130, 246, 0.18);
+--shadow-sheet: 0 24px 80px rgba(2, 6, 17, 0.55);
+--radius-block: 14px;
 ```
 
 **Fonts:**
-- Body: `Inter` (weights 300-800)
+- Body: `Inter` (weights 300-800), 17px (`1.0625rem`), `line-height: 1.75`, antialiased
 - Code: `JetBrains Mono` (weights 400-600)
 
 ### Layout Conventions
-- **Index page:** Hero section + featured article card + article list cards
-- **Article pages:** Hero with title/badge + optional TOC sticky nav + numbered sections
-- **Cards:** `border-radius: 16px`, hover effect with `box-shadow-glow` and `translateY(-2px)`
-- **Section numbers:** 48x48px gradient badges with white text
-- **Code blocks:** `background: var(--bg-code)`, `border-radius: 12px`
-- **Blockquotes:** Left blue border, card background, large decorative quote mark
-- **Highlight boxes:** Gradient border with blue tint for key takeaways
+- **Index page:** Photo hero (blurred, low opacity, under dark overlay + blue glow) + featured article card + article list cards
+- **Article pages:** Hero (title/badge/meta) with the article body on an elevated "sheet" — `max-width: 740px`, gradient surface, `border-radius: 24px`, soft shadow, overlapping the hero by `-3.75rem`; reading measure ~72ch
+- **Hero title:** Solid `--text-primary` (no gradient text) with a small 56px gradient dash (`::after`) beneath
+- **TOC:** Optional sticky nav (`.toc-nav`) with pill links above the sheet
+- **Numbered sections:** `.section-header` with 48x48px gradient `.section-number` badges (white text)
+- **Cards:** `border-radius: 14-16px`, hover effect with `box-shadow-glow` and `translateY(-2px)`
+- **Code blocks:** Unified on `--bg-code` with hairline border; Chroma inline backgrounds are neutralized via `.highlight pre { background: transparent !important; }`
+- **Links:** Underlined by default (`text-underline-offset: 3px`), color `--accent-blue`
+- **Blockquotes:** Left blue border, subtle inset background, decorative quote mark
+- **Highlight boxes:** Blue-tinted gradient with 3px left accent border for key takeaways
 - **Tables:** Wrapped in `.table-wrapper` with rounded borders
+- **Category accents:** Default hero badge is blue; per-category overrides go in a small second `<style>` block (e.g. green for AI Engineering, red for DevOps)
+- **Accessibility:** `:focus-visible` outlines, `prefers-reduced-motion` support, WCAG AA+ contrast
+- **Print:** Every page ships `@media print` rules — light paper output, backgrounds stripped, syntax colors flattened to ink, fixed elements hidden
 
 ### Article Meta Format
 ```html
