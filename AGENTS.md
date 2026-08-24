@@ -72,7 +72,7 @@ The blog uses a custom dark theme ("dark sheet" design, August 2026 redesign). A
 - **Index page:** Photo hero (blurred, low opacity, under dark overlay + blue glow) + featured article card + article list cards
 - **Article pages:** Hero (title/badge/meta) with the article body on an elevated "sheet" — `max-width: 740px`, gradient surface, `border-radius: 24px`, soft shadow, overlapping the hero by `-3.75rem`; reading measure ~72ch
 - **Hero title:** Solid `--text-primary` (no gradient text) with a small 56px gradient dash (`::after`) beneath
-- **TOC:** Optional sticky nav (`.toc-nav`) with pill links above the sheet
+- **TOC:** Optional sticky nav (`.toc-nav`) with pill links above the sheet; when present, the sheet drops the hero overlap and starts with `margin-top: 1.25rem` (`.toc-nav + .container`) so the bar never covers the first paragraph
 - **Numbered sections:** `.section-header` with 48x48px gradient `.section-number` badges (white text)
 - **Cards:** `border-radius: 14-16px`, hover effect with `box-shadow-glow` and `translateY(-2px)`
 - **Code blocks:** Unified on `--bg-code` with hairline border; Chroma inline backgrounds are neutralized via `.highlight pre { background: transparent !important; }`

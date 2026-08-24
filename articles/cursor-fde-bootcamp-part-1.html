@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>От дорогого автокомплита до полноценной AI Software Factory — что я вынес из Cursor FDE Bootcamp</title>
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://eugene-burachevskiy.github.io/ai-vs-devops-blog/articles/cursor-fde-bootcamp-part-1.html">
+    <meta property="og:title" content="От дорогого автокомплита до полноценной AI Software Factory — что я вынес из Cursor FDE Bootcamp">
+    <meta property="og:description" content="Cursor FDE Bootcamp: почему первый скил Forward Deployed Engineer — не строить лишнее. AI maturity, SDLC shape и scaffolding перед автономными агентами. Часть 1.">
+    <meta property="og:image" content="https://eugene-burachevskiy.github.io/ai-vs-devops-blog/images/cursor-fde-bootcamp/01-adoption-maturity-curve.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="От дорогого автокомплита до полноценной AI Software Factory — что я вынес из Cursor FDE Bootcamp">
+    <meta name="twitter:description" content="Cursor FDE Bootcamp: почему первый скил Forward Deployed Engineer — не строить лишнее. AI maturity, SDLC shape и scaffolding перед автономными агентами. Часть 1.">
+    <meta name="twitter:image" content="https://eugene-burachevskiy.github.io/ai-vs-devops-blog/images/cursor-fde-bootcamp/01-adoption-maturity-curve.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --bg-code: #0b101c;
+            --bg-sheet-top: #161e31;
+            --bg-sheet: #121929;
+            --text-primary: #f0f4f8;
+            --text-body: #b9c5d8;
+            --text-secondary: #94a3b8;
+            --text-muted: #6e7f97;
+            --accent-blue: #60a5fa;
+            --accent-blue-deep: #3b82f6;
+            --accent-cyan: #22d3ee;
+            --accent-purple: #a78bfa;
+            --accent-green: #34d399;
+            --accent-orange: #f59e0b;
+            --accent-red: #f87171;
+            --border-color: rgba(148, 163, 184, 0.16);
+            --border-light: rgba(148, 163, 184, 0.30);
+            --border-faint: rgba(148, 163, 184, 0.09);
+            --gradient-1: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
+            --shadow-glow: 0 8px 32px rgba(59, 130, 246, 0.18);
+            --shadow-sheet: 0 24px 80px rgba(2, 6, 17, 0.55);
+            --radius-block: 14px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-body);
+            font-size: 1.0625rem;
+            line-height: 1.75;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background:
+                radial-gradient(55rem 34rem at 15% -10%, rgba(59, 130, 246, 0.10), transparent 60%),
+                radial-gradient(45rem 30rem at 90% 8%, rgba(6, 182, 212, 0.06), transparent 60%);
+        }
+        ::selection { background: rgba(59, 130, 246, 0.38); color: #fff; }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: #26314a; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue-deep); }
+
+        .back-btn {
+            position: fixed;
+            top: 1.1rem;
+            left: 1.1rem;
+            z-index: 200;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 1.1rem;
+            background: rgba(13, 18, 32, 0.78);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .hero {
+            position: relative;
+            padding: 8.5rem 1.5rem 9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            text-align: center;
+        }
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            opacity: 0.18;
+            background-image: url('../images/hero_ai.jpg');
+            background-size: cover;
+            background-position: center;
+            filter: blur(4px);
+        }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(70% 100% at 50% 0%, rgba(59, 130, 246, 0.13), transparent 68%),
+                linear-gradient(180deg, rgba(10, 14, 26, 0.72) 0%, rgba(10, 14, 26, 0.92) 100%);
+            pointer-events: none;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 700px;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.95rem;
+            background: rgba(96, 165, 250, 0.09);
+            border: 1px solid rgba(96, 165, 250, 0.28);
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: var(--accent-blue);
+            margin-bottom: 1.6rem;
+        }
+        .hero h1 {
+            font-size: clamp(1.9rem, 4.6vw, 2.9rem);
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            line-height: 1.18;
+            margin-bottom: 1.4rem;
+            color: var(--text-primary);
+            text-wrap: balance;
+        }
+        .hero h1::after {
+            content: '';
+            display: block;
+            width: 56px;
+            height: 3px;
+            border-radius: 2px;
+            background: var(--gradient-1);
+            margin: 1.5rem auto 0;
+        }
+        .hero-subtitle {
+            font-size: 1.125rem;
+            line-height: 1.65;
+            color: var(--text-secondary);
+            max-width: 560px;
+            margin: 0 auto;
+            text-wrap: balance;
+        }
+        .hero-meta {
+            display: flex;
+            justify-content: center;
+            gap: 1.75rem;
+            flex-wrap: wrap;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 1.8rem;
+        }
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toc-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-faint);
+            padding: 0.85rem 0;
+        }
+        .toc-inner {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .toc-inner::-webkit-scrollbar { display: none; }
+        .toc-link {
+            padding: 0.45rem 0.95rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            transition: color 0.2s, background 0.2s, border-color 0.2s;
+        }
+        .toc-link:hover { color: var(--accent-blue); }
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: rgba(96, 165, 250, 0.09);
+            border-color: rgba(96, 165, 250, 0.28);
+        }
+        /* when a TOC bar is present, the sheet starts below it instead of overlapping up into it */
+        .toc-nav + .container { margin-top: 1.25rem; }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 740px;
+            margin: -3.75rem auto 0;
+            padding: clamp(1.75rem, 4.5vw, 3.25rem);
+            background: linear-gradient(180deg, var(--bg-sheet-top) 0%, var(--bg-sheet) 100%);
+            border: 1px solid var(--border-faint);
+            border-radius: 24px;
+            box-shadow: var(--shadow-sheet), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            animation: fadeInUp 0.55s ease-out;
+        }
+        .section {
+            padding: 2.5rem 0;
+            border-bottom: 1px solid var(--border-faint);
+        }
+        .section:last-child { border-bottom: none; }
+
+        .section-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .section-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
+        }
+        .section-title-group h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.25;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        .section-title-group p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            margin: 0;
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            margin: 2.75rem 0 1rem;
+            color: var(--text-primary);
+        }
+        h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            margin: 2.5rem 0 0.9rem;
+            color: var(--text-primary);
+        }
+        h4 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin: 2rem 0 0.75rem;
+            color: var(--accent-cyan);
+        }
+        p {
+            margin-bottom: 1.35em;
+            color: var(--text-body);
+            text-wrap: pretty;
+        }
+        .container > p:first-of-type {
+            font-size: 1.15rem;
+            line-height: 1.7;
+            color: #ccd6e6;
+            margin-bottom: 1.6em;
+        }
+        strong { color: var(--text-primary); font-weight: 600; }
+
+        a {
+            color: var(--accent-blue);
+            text-decoration: underline;
+            text-decoration-color: rgba(96, 165, 250, 0.35);
+            text-underline-offset: 3px;
+            transition: color 0.2s;
+        }
+        a:hover { color: #93c5fd; text-decoration-color: currentColor; }
+        a:focus-visible,
+        .back-btn:focus-visible {
+            outline: 2px solid var(--accent-blue);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        blockquote {
+            background: rgba(148, 163, 184, 0.06);
+            border-left: 3px solid var(--accent-blue);
+            padding: 1.4rem 1.75rem;
+            margin: 2rem 0;
+            border-radius: 0 var(--radius-block) var(--radius-block) 0;
+            font-style: italic;
+            color: #d3dce9;
+            position: relative;
+        }
+        blockquote::before {
+            content: '\201C';
+            font-size: 3.5rem;
+            color: var(--accent-blue);
+            opacity: 0.18;
+            position: absolute;
+            top: -0.75rem;
+            left: 0.9rem;
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 2rem 0;
+            border-radius: var(--radius-block);
+            border: 1px solid var(--border-faint);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        thead { background: rgba(148, 163, 184, 0.07); }
+        th {
+            padding: 0.9rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-light);
+            white-space: nowrap;
+        }
+        td {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid var(--border-faint);
+            color: var(--text-body);
+        }
+        tbody tr:hover { background: rgba(96, 165, 250, 0.05); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-faint);
+            border-radius: var(--radius-block);
+            padding: 1.4rem 1.5rem;
+            overflow-x: auto;
+            margin: 1.75rem 0;
+        }
+        code {
+            font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+        }
+        pre code { color: #e2e8f0; }
+        :not(pre) > code {
+            background: rgba(148, 163, 184, 0.13);
+            color: #67e8f9;
+            padding: 0.15em 0.45em;
+            border-radius: 6px;
+            font-size: 0.85em;
+        }
+
+        .highlight {
+            background: var(--bg-code);
+            border: 1px solid var(--border-faint);
+            border-radius: var(--radius-block);
+            overflow: hidden;
+            margin: 1.75rem 0;
+        }
+        .highlight pre {
+            margin: 0;
+            border: none;
+            border-radius: 0;
+            background: transparent !important;
+            padding: 1.4rem 1.5rem;
+        }
+
+        ul, ol {
+            margin: 1.5rem 0;
+            padding-left: 1.4rem;
+        }
+        li {
+            margin-bottom: 0.65em;
+            color: var(--text-body);
+        }
+        li::marker { color: var(--accent-blue); }
+
+        img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: 2.25rem auto;
+            border-radius: var(--radius-block);
+            border: 1px solid var(--border-faint);
+            box-shadow: 0 16px 48px rgba(2, 6, 17, 0.4);
+        }
+        img[width="289"] { max-width: 300px; }
+
+        .img-link { display: block; text-decoration: none; }
+        .img-link:hover img { border-color: rgba(96, 165, 250, 0.45); }
+        .image-caption {
+            text-align: center;
+            font-size: 0.85rem;
+            font-style: italic;
+            color: var(--text-muted);
+            margin: -1.5rem auto 2.25rem;
+            max-width: 92%;
+            line-height: 1.6;
+        }
+        .pipeline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: var(--accent-cyan);
+            text-align: center;
+            background: rgba(148, 163, 184, 0.05);
+            border: 1px solid var(--border-faint);
+            border-radius: var(--radius-block);
+            padding: 1rem 1.25rem;
+            margin: 1.75rem 0;
+        }
+        .footnote {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-top: -1rem;
+        }
+
+        .section-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: var(--radius-block);
+            margin: 2rem 0;
+            opacity: 0.85;
+            border: 1px solid var(--border-faint);
+            box-shadow: 0 16px 48px rgba(2, 6, 17, 0.4);
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+            margin: 2rem 0;
+        }
+        .card {
+            background: rgba(148, 163, 184, 0.05);
+            border: 1px solid var(--border-faint);
+            border-radius: var(--radius-block);
+            padding: 1.5rem;
+            transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+        }
+        .card:hover {
+            border-color: rgba(96, 165, 250, 0.45);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+        .card h4 {
+            margin-top: 0;
+            color: var(--text-primary);
+        }
+        .card p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px solid var(--border-faint);
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: rgba(148, 163, 184, 0.05);
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-faint);
+        }
+        .checklist li::before {
+            content: '✓';
+            color: var(--accent-green);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.09) 0%, rgba(6, 182, 212, 0.07) 100%);
+            border: 1px solid rgba(96, 165, 250, 0.25);
+            border-left: 3px solid var(--accent-blue);
+            border-radius: var(--radius-block);
+            padding: 1.5rem 1.75rem;
+            margin: 2rem 0;
+        }
+        .highlight-box h4 {
+            color: var(--accent-blue);
+            margin-top: 0;
+        }
+
+        .decision-tree {
+            background: rgba(148, 163, 184, 0.05);
+            border: 1px solid var(--border-faint);
+            border-radius: var(--radius-block);
+            padding: 1.75rem;
+            margin: 2rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 2;
+            overflow-x: auto;
+        }
+        .decision-tree .q { color: var(--accent-cyan); font-weight: 600; }
+        .decision-tree .a { color: var(--accent-green); }
+        .decision-tree .arrow { color: var(--text-muted); }
+
+        .summary-section {
+            background: linear-gradient(180deg, var(--bg-sheet-top) 0%, var(--bg-sheet) 100%);
+            border: 1px solid var(--border-faint);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin: 3.5rem 0;
+            box-shadow: var(--shadow-sheet), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        .summary-section h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .summary-item {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        .summary-item p {
+            font-size: 0.95rem;
+            margin: 0;
+        }
+        .summary-num {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 3rem 2rem 3.5rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.8;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .hero { padding: 7rem 1.25rem 6.5rem; }
+            .hero h1 { font-size: 1.8rem; }
+            .hero-subtitle { font-size: 1.02rem; }
+            .container {
+                margin: -2.5rem 1rem 0;
+                padding: 1.6rem 1.35rem 2rem;
+                border-radius: 18px;
+            }
+            .toc-inner { padding: 0 1rem; }
+            .section-header { flex-direction: column; }
+            .section-number { width: 40px; height: 40px; font-size: 1rem; }
+            .section-title-group h2 { font-size: 1.5rem; }
+            .summary-section { padding: 1.5rem; }
+            .card-grid { grid-template-columns: 1fr; }
+            .back-btn { top: 0.85rem; left: 0.85rem; padding: 0.5rem 0.95rem; font-size: 0.8rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        @media print {
+            body { background: #fff; color: #222; }
+            body::before { display: none; }
+            .back-btn, .toc-nav { display: none; }
+            .hero { padding: 1.5rem 0 1.5rem; }
+            .hero-bg, .hero-overlay { display: none; }
+            .hero-badge { background: none; border-color: #999; color: #444 !important; }
+            .hero h1 { color: #000 !important; }
+            .hero h1::after { background: #333; }
+            .hero-subtitle, p, li, td, th { color: #333 !important; }
+            h2, h3, h4, strong { color: #000 !important; }
+            h4 { color: #1a4d8f !important; }
+            a { color: #1a4d8f !important; }
+            .container {
+                max-width: 100%;
+                margin: 0;
+                padding: 0;
+                border: none;
+                box-shadow: none;
+                background: none;
+                animation: none;
+            }
+            .section { border-bottom-color: #ddd; }
+            .highlight, pre, .decision-tree, .table-wrapper, .card, blockquote, .highlight-box, .summary-section {
+                background: #f5f5f0 !important;
+                border-color: #ccc !important;
+                box-shadow: none !important;
+            }
+            .highlight pre, pre, code, .highlight span {
+                color: #1a1a1a !important;
+                background: transparent !important;
+            }
+            :not(pre) > code {
+                background: #ececec !important;
+                color: #1a1a1a !important;
+            }
+            img, .section-image { box-shadow: none; opacity: 1; }
+            .section-number, .summary-num {
+                box-shadow: none;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            blockquote, .card, .highlight-box, tr { break-inside: avoid; }
+            .footer { color: #555 !important; }
+        }
+    </style>
+    <style>
+        /* category accent: AI Development Methodology */
+        .hero-badge {
+            background: rgba(34, 211, 238, 0.09);
+            border-color: rgba(34, 211, 238, 0.28);
+            color: var(--accent-cyan);
+        }
+    </style>
+</head>
+<body>
+
+<a href="../index.html" class="back-btn">← Back to Blog</a>
+
+<!-- Hero -->
+<header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <div class="hero-badge">AI Development Methodology</div>
+        <h1>От дорогого автокомплита до полноценной AI Software Factory — что я вынес из Cursor FDE Bootcamp</h1>
+        <p class="hero-subtitle">Чем на самом деле занимается Forward Deployed Engineer: adoption engineering, диагностика зрелости и scaffolding перед автономными агентами. Часть 1.</p>
+        <div class="hero-meta">
+            <span>📅 August 24, 2026</span>
+            <span>⏱️ 14 min read</span>
+            <span>🌐 Russian</span>
+        </div>
+    </div>
+</header>
+
+<!-- TOC -->
+<nav class="toc-nav">
+    <div class="toc-inner">
+        <a href="#diagnostics" class="toc-link">Диагностика</a>
+        <a href="#scaffolding" class="toc-link">Scaffolding</a>
+        <a href="#readiness" class="toc-link">Readiness</a>
+        <a href="#conclusion" class="toc-link">Итоги</a>
+    </div>
+</nav>
+
+<main class="container">
+
+    <p>Представьте, Вы — Senior Forward Deployed Engineer. Вы работаете с компанией Meridian Health. Исходные данные компании таковы:</p>
+    <ul>
+        <li>4000 инженеров</li>
+        <li>Adoption Cursor-а (ну или другого AI-coding агента) достиг 60% за первый месяц, но в последующие 5 месяцев цифры адопшена больше не росли</li>
+        <li>PR velocity не растет</li>
+        <li>При этом CTO очень хочет показать совету директоров рабочих cloud agents буквально через месяц</li>
+        <li>15 синьор инженеров в компании хотят доступ к SDK</li>
+        <li>В компании уже есть concerns от секьюрити, из-за доступа агентов к проду</li>
+    </ul>
+    <p>И что в таком случае должен сделать опытный FDE? Помочь с ожидаемыми клауд агентами или SDK платформой? Или все же поставить под сомнение необходимость этих внедрений, потому что у компании все еще нет общей системы конфигураций, нет реальных улучшений workflow, а ботлнек по части код ревью после внедрения cloud agents станет еще серьезнее?</p>
+    <p>Несколько недель назад, в рамках партнерства нашей компании Exadel и Anysphere Cursor я проходил тренинг на Cursor FDE Bootcamp. И я думал, что он с большего будет о навороченных техниках имплементации AI в продуктах. Хотя первое же упражнение было о том, что делать не стоит.</p>
+    <p>И вот на этом месте я немного завис. Когда идешь на bootcamp от Cursor, в голове сама собой рисуется программа про агентов, rules, SDK и сложные интеграции. Но первый серьезный вопрос оказался не «как это построить?», а «нужно ли это вообще сейчас строить?». Для меня именно здесь bootcamp перестал быть просто product training и стал больше похож на systems engineering вокруг людей, процессов и реальных ограничений бизнеса.</p>
+    <p>Как в примере выше, у кастомера была проблема не с наличием рабочих АИ агентов, у них была проблема с адопшеном технологии в процессы. Количество незакрытых PR в примере выше не уменьшилось бы с внедрением автономных агентов, а демо для боссов техническо было бы реальным, но организационно было бы просто фейком.</p>
+
+    <div class="highlight-box">
+        <h4>Ключевой вывод</h4>
+        <p>Первый важный скил FDE — это не строить системы быстро, а <strong>не строить быстро что-то на самом деле не нужное</strong>.</p>
+    </div>
+
+    <p>Мне этот вывод понравился именно потому, что он немного неприятный. Инженеру гораздо проще сразу начать рисовать архитектуру, выбирать инструменты и думать, как все это зашипить. Так быстро появляется ощущение прогресса. Сказать же клиенту, что его запрос преждевременный, а красивое demo ничего не докажет, намного сложнее. Тут уже мало уметь хорошо кодить: нужно разобраться в чужих процессах и быть готовым сломать простую и красивую картинку ради более честного результата.</p>
+    <p>И чтобы определить, почему «Нет» может быть наиболее технически верным ответом, мы должны взглянуть на то, что FDE на самом деле должен создавать.</p>
+
+    <a href="../images/cursor-fde-bootcamp/01-adoption-maturity-curve.jpg" class="img-link">
+        <img src="../images/cursor-fde-bootcamp/01-adoption-maturity-curve.jpg" alt="Every customer is somewhere on the AI adoption curve">
+    </a>
+    <p class="image-caption">AI adoption is a progression from isolated tool use to a customer-owned software factory. The FDE's job is to create sustainable movement, not activity inside one phase. Source: Cursor FDE Bootcamp v1, May 2026.</p>
+
+    <p>FDE — это Adoption Engineer, это не тот человек, который придет в компанию, внедрит новые модные технологии и покажет красивые демо. Его артефакты — это не новый продукт, это «customer's new capabilities», способности и возможности клиента эффективно использовать и поддерживать новую технологию самостоятельно, после вас.</p>
+    <p>Для меня это, наверное, и было главным сдвигом в понимании роли. Раньше я бы в первую очередь смотрел на саму имплементацию: проходит ли happy path, учтены ли edge cases, можно ли уверенно показать результат. После bootcamp к этому добавился еще один вопрос: а что останется у клиента, когда FDE уйдет? Если ответ сводится к репозиторию с кодом и записи финального demo, то имплементация, возможно, закончена. Но задача FDE еще не обязательно выполнена.</p>
+    <p>FDE объединяет несколько ролей:</p>
+    <ul>
+        <li><strong>Discovery:</strong> изучить воркфлоу на проекте/глобально в компании, и найти те, где внедрение AI может принести реальное, <em>измеримое</em> value.</li>
+        <li><strong>Sequencing:</strong> решить, какую из новых capabilites организация сможет поддерживать самостоятельно.</li>
+        <li><strong>Engineering:</strong> полноценная рабочая имплементация, то что мы можем зашипить за недели, <em>не за месяцы</em>!</li>
+        <li><strong>Governance:</strong> разработать permissions, аудит, quality гейты, и <em>что важно!</em> — shutdown conditions (не всегда все получается с первого раза, должны быть четкие критерии и план, как мы можем остановить автоматизацию, вернуть ручной flow или старую детерминированную автоматизацию, как мы можем доработать скоуп и улучшить наш процесс после отключения)</li>
+        <li><strong>Change management:</strong> стройте продукт и процессы вместе с внутренними инженерами компании, постарайтесь поменять скептиков в контрибьютеров.</li>
+        <li><strong>Capability transfer:</strong> быть уверенным, что клиент сможет сам управлять, модифицировать и улучшать новые процессы.</li>
+        <li><strong>Product feedback:</strong> определить, какие практики из кастомных клиентских решений стоит превратить в переиспользуемые компоненты продукта</li>
+    </ul>
+    <p>Как видим — здесь есть пересечения и с продукт менеджментом, и с бизнес аналитикой, предстоит много копаться в процессах клиента, общаться со stakeholders, но и классический инжиниринг все так же присутствует.</p>
+    <p>Так же давайте более предметно сравним задачу FDE с другими ролями. Ведь что для других ролей реальный критерий успеха, для FDE лишь чекпойнт и не финальный результат:</p>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Роль</th>
+                    <th>Типичный критерий успеха</th>
+                    <th>Почему этого недостаточно для FDE</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Solution Engineering</td>
+                    <td>Демо доказывает, что продукт способен решить задачу</td>
+                    <td>Решение может не выдержать столкновения с реальными workflow и организационной структурой клиента</td>
+                </tr>
+                <tr>
+                    <td>Consulting</td>
+                    <td>Рекомендации и согласованные deliverables подготовлены</td>
+                    <td>Клиент может остаться зависимым от консультанта</td>
+                </tr>
+                <tr>
+                    <td>Staff Augmentation</td>
+                    <td>У клиента стало больше ресурсов для имплементации</td>
+                    <td>Это не обязательно меняет operating model клиента</td>
+                </tr>
+                <tr>
+                    <td>Product Engineering</td>
+                    <td>Выпущена масштабируемая универсальная фича</td>
+                    <td>Она может не решить срочную zero-to-one задачу конкретного клиента (1)</td>
+                </tr>
+                <tr>
+                    <td>Forward Deployed Engineering</td>
+                    <td>Клиент достигает измеримого результата и может самостоятельно воспроизвести этот паттерн</td>
+                    <td><strong>Это и есть целевой результат</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="footnote">1) zero-to-one problem — это задача, где нужно создать первую работающую версию решения с нуля, когда еще нет готового паттерна, проверенной архитектуры или понятного процесса. Например, клиент понимает бизнес-проблему, но еще не знает, какое AI-решение ему нужно.</p>
+
+    <p>И здесь есть еще один важный момент, который я раньше скорее относил к менеджменту, чем к архитектуре. Executive sponsorship тоже является частью архитектуры решения. Можно технически правильно спроектировать cross-team систему, настроить интеграции и даже показать рабочее демо. Но если в компании нет человека с достаточными полномочиями, который может согласовать изменения между командами, назначить владельца процесса и разрешить неизбежные конфликты, то такая система еще не готова. У нее есть код, но нет механизма принятия решений.</p>
+    <p>По той же причине org chart нужно анализировать не менее внимательно, чем схему инфраструктуры. На scope проекта влияют не только репы, API и network topology. Нужно понимать, где проходят compliance boundaries, кто владеет конкретными системами, какая команда может изменить workflow, а какая может его заблокировать. Иногда главным блокером оказывается не отсутствие технической интеграции, а отсутствие нужного человека на встрече.</p>
+    <p>Отсюда следует принцип <em>«build with, not for»</em>. И это реально один из механизмов production readiness. Если FDE самостоятельно расписал процессы, собрал агентов и настроил автоматизацию, клиент получит рабочее решение. Но после handoff может оказаться, что никто внутри компании не понимает, почему оно устроено именно так, как его поддерживать и что делать при первой серьезной ошибке. Когда же внутренние инженеры участвуют в discovery, спорят с решениями, пишут часть конфигурации и сами проводят финальное демо, мы проверяем не только систему. Мы проверяем способность команды продолжать работу без FDE.</p>
+    <p>Поэтому перед началом engagement я бы теперь спрашивал не только: «Что мы должны зашипить?». Важнее понять, что нового клиент действительно сможет делать после нашего ухода и кто станет owner-ом этого процесса. Как мы докажем, что изменили реальный workflow, а не просто подготовили красивое демо? И сможет ли команда самостоятельно собрать следующую агентную автоматизацию, используя созданный нами паттерн?</p>
+    <p>Если на эти вопросы нет понятных ответов, engagement еще рано считать правильно сформулированным. Возможно, решение уже можно начать кодить, но пока непонятно, кто и как будет превращать его в устойчивую capability компании.</p>
+
+    <a href="../images/cursor-fde-bootcamp/02-pillars-across-maturity.jpg" class="img-link">
+        <img src="../images/cursor-fde-bootcamp/02-pillars-across-maturity.jpg" alt="Each FDE pillar moves customers between maturity phases">
+    </a>
+    <p class="image-caption">Different stages of AI adoption require different engagements: shared scaffolding first, asynchronous work next, and a customer-owned agent platform only after that. Trust and governance apply at every stage. Source: Cursor FDE Bootcamp v1, May 2026.</p>
+
+    <section class="section" id="diagnostics">
+        <div class="section-header">
+            <div class="section-number">1</div>
+            <div class="section-title-group">
+                <h2>Две оси диагностики: AI maturity и SDLC shape</h2>
+            </div>
+        </div>
+
+        <p>Картинка выше дает довольно понятную последовательность развития. Сначала компания приводит в порядок synchronous работу с AI (чаты, кодинг харнесы), затем переносит часть задач в async agents и automations, а уже после этого может строить собственную AI Software Factory. Выглядит почти как roadmap: определили текущую фазу, посмотрели на следующую и выбрали подходящий engagement.</p>
+        <p>Но одного maturity level для этого недостаточно.</p>
+        <p>Это был еще один полезный для меня момент из bootcamp. До него я бы, скорее всего, начал оценивать клиента по одной шкале: сколько инженеров используют AI, насколько активно они работают с agents, есть ли общие rules/skills и дошли ли команды до автономных workflow. Такая шкала действительно показывает, насколько сложное решение организация способна поддерживать. Но она почти ничего не говорит о том, где именно AI принесет наибольшую пользу.</p>
+        <p>Две компании могут иметь одинаковые 70% adoption и находиться примерно на одной maturity phase. При этом одной нужен AI-assisted code review, потому что именно там неделями стоит работа. У другой review уже хорошо автоматизирован, зато planning и deployment остались полностью ручными. Формально maturity одинаковая. Реальный scope будет разным.</p>
+
+        <h3>Ось 1: что организация уже способна поддерживать</h3>
+        <p>Первая ось показывает не количество купленных лицензий, а реальную зрелость рабочих процессов. Условно ее можно разложить так:</p>
+        <ol>
+            <li>AI почти не встроен в ежедневную разработку.</li>
+            <li>Инженеры используют autocomplete, а несколько power users экспериментируют каждый по-своему.</li>
+            <li>Появляется нормальная synchronous agentic development: общие rules и skills, повторяемые паттерны, review практики и понятные guardrails.</li>
+            <li>Команды готовы передавать ограниченные задачи в async agents и automations.</li>
+            <li>У компании есть люди и процессы, способные владеть внутренней Agents Platform и развивать ее без постоянной внешней помощи.</li>
+        </ol>
+        <p>Здесь легко попасть в ловушку активных seats. Если 80% инженеров хотя бы раз в неделю открывают Cursor, это еще не означает, что компания находится на четвертом пункте. Возможно, половина использует его как более умный autocomplete, несколько сильных инженеров построили свои локальные rules и активно упрощают свою работу скилами, а остальные команды даже не знают об их существовании.</p>
+        <p>Поэтому вопрос «сколько людей использует AI?» сам по себе слабый. Гораздо интереснее спросить: используют ли разные команды одни и те же проверенные практики? Где лежат rules и кто их меняет? Есть ли общие quality gates? Могут ли инженеры объяснить, почему агенту разрешено выполнять одни действия и запрещено выполнять другие? И кто будет разбираться с автоматизацией, если через месяц она начнет давать плохой результат?</p>
+        <p>Эта ось отвечает на вопрос: <strong>какую сложность организация сможет переварить и поддерживать после handoff?</strong></p>
+
+        <h3>Ось 2: где именно AI встроен в SDLC</h3>
+        <p>Вторая ось раскладывает разработку по lifecycle:</p>
+        <div class="pipeline">Plan → Design → Write → Review → Test → Deploy</div>
+        <p>Здесь мы смотрим уже не на общую зрелость, а на форму внедрения AI. В каких стадиях он реально участвует? Где есть измеримый эффект? Где работа все еще ждет человека? Где ускорение предыдущего этапа просто создало очередь на следующем?</p>
+        <p>Например, команда может очень быстро генерировать код, но 4-5 дней ждать review. Добавить ей еще больше coding agents означает ускорить уже быструю часть процесса и увеличить существующий bottleneck. Другой клиент может хорошо автоматизировать review и tests, но тратить дни на подготовку design docs или ручной deployment. Ему нужен совсем другой первый use case.</p>
+
+        <a href="../images/cursor-fde-bootcamp/03-same-maturity-different-sdlc.jpg" class="img-link">
+            <img src="../images/cursor-fde-bootcamp/03-same-maturity-different-sdlc.jpg" alt="Same adoption phase, different SDLC shape, different engagement">
+        </a>
+        <p class="image-caption">The same adoption maturity does not imply the same engagement. Customers at the same stage can have completely different gaps across the SDLC. Source: Cursor FDE Bootcamp v1, May 2026.</p>
+
+        <p>Вот какой набор вопросов я бы теперь использовал на discovery:</p>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Вопрос</th>
+                        <th>Что может скрываться за слабым ответом</th>
+                        <th>Куда смотреть дальше</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Чем работа лучших AI-пользователей отличается от остальных команд?</td>
+                        <td>В компании нет общего operating pattern</td>
+                        <td>Scaffolding / Enterprise Readiness</td>
+                    </tr>
+                    <tr>
+                        <td>На каком этапе задача проводит больше всего времени в ожидании?</td>
+                        <td>Bottleneck находится после генерации кода</td>
+                        <td>Review, testing или другая SDLC integration</td>
+                    </tr>
+                    <tr>
+                        <td>Какая ошибка агента будет самой дорогой?</td>
+                        <td>Нет risk model и подходящих evals</td>
+                        <td>Governance и evaluation design</td>
+                    </tr>
+                    <tr>
+                        <td>Кто может изменить процесс сразу для нескольких команд?</td>
+                        <td>У проекта нет достаточных полномочий</td>
+                        <td>Продолжить discovery до implementation</td>
+                    </tr>
+                    <tr>
+                        <td>Кто будет owner-ом через месяц после handoff?</td>
+                        <td>Решение останется зависимым от FDE</td>
+                        <td>Не начинать rollout, пока ownership не определен</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p>Мне нравится этот фреймворк тем, что он быстро ломает слишком общие запросы вроде «мы хотим больше AI» или «давайте внедрим агентов во всю разработку». После нескольких вопросов становится видно, что именно компания умеет поддерживать, где находится реальная проблема и кто способен довести изменение до прода.</p>
+        <p>Можно сформулировать кратко: <strong>maturity определяет, что организация сможет удержать, а SDLC shape показывает, куда имеет смысл вмешиваться.</strong></p>
+        <p>Если посмотреть только на первую ось, легко выбрать слишком сложную технологию. Если только на вторую — можно правильно найти bottleneck, но построить решение, к которому компания еще не готова.</p>
+        <p>И отсюда следует не самый приятный для любителей автономных агентов вывод. Большинству компаний, которые просят Cloud Agents, сначала нужен нормальный scaffolding. Иначе агенты не исправят различия между командами, отсутствие ownership и слабые review practices. Они просто начнут воспроизводить все это быстрее.</p>
+    </section>
+
+    <section class="section" id="scaffolding">
+        <div class="section-header">
+            <div class="section-number">2</div>
+            <div class="section-title-group">
+                <h2>Scaffolding before autonomy</h2>
+            </div>
+        </div>
+
+        <p>Чтобы это не звучало как очередной совет в духе «сначала наведите порядок», посмотрим на один из сценариев воркшопа с FDE Bootcamp. Это именно учебный кейс, а не публичная история реального клиента, но мне он понравился своей реалистичностью.</p>
+        <p>Northstar Logistics: около 250 инженеров в 30 командах, Cursor развернули три месяца назад, active usage показывает примерно 85%. На слайде это выглядит почти как успешный rollout. Можно переходить к Cloud Agents, правда?</p>
+        <p>Но внутри компании нет центральных rules, skills, нет общих sub-agents и нет versioned configuration repository. Каждая команда использует Cursor по-своему. Где-то сильные инженеры уже собрали хорошие практики, а где-то инструмент остается дорогим autocomplete. Усредненная метрика в 85% скрывает эту разницу довольно неплохо.</p>
+        <p>Вместо Cloud Agents для такого клиента предлагается двухнедельный Enterprise Readiness engagement:</p>
+        <ul>
+            <li>Найти команды, которые уже получают от Cursor заметную пользу, и посмотреть, что именно они делают иначе</li>
+            <li>Вместе с их инженерами оформить 6–10 high-leverage rules</li>
+            <li>Собрать несколько узких sub-agents, например для PR description, test scaffolding и генерации internal API clients</li>
+            <li>вынести конфигурацию в shared, versioned repository</li>
+            <li>провести teach-back sessions</li>
+            <li>оставить минимум двух platform engineers, которые смогут менять rules без FDE</li>
+        </ul>
+
+        <a href="../images/cursor-fde-bootcamp/04-readiness-training-scenario.jpg" class="img-link">
+            <img src="../images/cursor-fde-bootcamp/04-readiness-training-scenario.jpg" alt="Enterprise Readiness workshop scenario">
+        </a>
+        <p class="image-caption">Workshop scenario: high seat activity without shared scaffolding is still an early-stage adoption problem. A bounded engagement creates shared patterns, ownership, and measurable workflow change. Source: Cursor FDE Bootcamp v1, May 2026.</p>
+
+        <p>Здесь мне особенно понравился подход к rules. Их не предлагает написать FDE, сидя отдельно со своим списком бест практик. Сначала нужно найти внутренние команды, у которых уже что-то работает, и вытащить паттерны из их реального workflow. FDE помогает эти паттерны увидеть, проверить, оформить и распространить. Но их авторами и будущими owners остаются инженеры клиента.</p>
+        <p>Иначе получится знакомая история. В репозитории появится красивый набор rules, который формально можно показать на финальном demo. Через месяц половина из них устареет, некоторые начнут конфликтовать с реальными процессами... А менять их никто не решится, потому что никто внутри компании не понимает исходных решений. Технический артефакт останется. Новая capability у клиента не появится.</p>
+        <p>Есть здесь и еще одна ловушка: слишком удобные success metrics. В initial proposal было «улучшить качество PR descriptions». Но что это значит и кто решает, что description стал лучше? Такую метрику легко объявить успешной после пары красивых примеров.</p>
+        <p>Гораздо полезнее смотреть на review turnaround, процент PR, которые проходят first review без возврата, adoption среди целевых команд и contributions в configuration repository от самих инженеров клиента. Пять команд из тридцати — это хороший старт, но еще не успешный rollout на всю компанию. Поэтому нужен «named engineering leader», который продолжит распространение после завершения нашего engagement.</p>
+        <p>И да, скептический взгляд здесь тоже нужен. Если синьор со стороны кастомера говорит, что Cursor делает джунов хуже, самый простой вариант — это, конечно, списать это мнение на сопротивление новым изменениям. Но в его наблюдении может быть и зерно истины: джуны используют агентов без общих rules, review patterns и guardrails. Поэтому я бы не убирал такого человека из рабочей группы. Я бы попросил его помочь написать один из стандартов и потом вместе проверить, стало ли лучше.</p>
+        <p>Scaffolding в таком виде уже не выглядит как подготовительная работа ради галочки. Это способ взять хорошие локальные практики нескольких power users и превратить их в общую engineering system, которой компания действительно владеет.</p>
+    </section>
+
+    <section class="section" id="readiness">
+        <div class="section-header">
+            <div class="section-number">3</div>
+            <div class="section-title-group">
+                <h2>Как проверить readiness до запуска async agents</h2>
+            </div>
+        </div>
+
+        <p>После bootcamp мой checklist выглядел бы примерно так:</p>
+        <ul>
+            <li><strong>Есть ли общие практики?</strong> Не набор локальных команд у трех энтузиастов, а rules, skills и sub-agents, которые реально используют разные команды.</li>
+            <li><strong>Где они хранятся?</strong> Конфигурация должна быть versioned, reviewable и иметь понятный contribution flow.</li>
+            <li><strong>Кто owner?</strong> Должен быть конкретный engineering leader и инженеры, которые могут менять систему без FDE.</li>
+            <li><strong>Есть ли baseline?</strong> До automation нужно знать текущий review time, объем ручной работы, defect rate или другую метрику, которую мы собираемся изменить.</li>
+            <li><strong>Определены ли quality gates и permissions?</strong> Команда должна понимать, что агент может делать сам, где требуется human-in-the-loop и при каких результатах automation нужно остановить.</li>
+            <li><strong>Участвуют ли скептики?</strong> Если самые уважаемые senior engineers остались за пределами rollout, их возражения вернутся позже, только уже после внедрения.</li>
+            <li><strong>Выдержит ли downstream процесс новый throughput?</strong> Больше сгенерированного кода не поможет, если review, tests или deployment уже забиты.</li>
+            <li><strong>Что произойдет после handoff?</strong> Кто разберет инциденты, обновит практики и обучит следующую команду?</li>
+        </ul>
+        <p>Я бы не требовал идеального ответа на каждый вопрос. Enterprise systems вообще редко бывают идеально готовы к чему-либо. <em><strong>Но если почти везде ответ — «потом разберемся», Cloud Agents просто сделают это «потом» дороже!</strong></em></p>
+    </section>
+
+    <section class="section" id="conclusion">
+        <div class="section-header">
+            <div class="section-number">4</div>
+            <div class="section-title-group">
+                <h2>Вместо заключения: сначала capability, потом autonomy</h2>
+            </div>
+        </div>
+
+        <p>Вернемся к Meridian Health из начала статьи. CTO хочет показать совету директоров Cloud Agents, senior engineers просят SDK, deadline уже близко. Технически FDE, вероятно, сможет собрать демо. Но оно докажет только то, что один agent один раз отработал на одном выбранном репо.</p>
+        <p>Оно не докажет, что 4 000 инженеров готовы использовать этот паттерн. Не докажет, что security согласовал permissions. Не исправит review cycle в 4–5 дней и не создаст owner-а, который продолжит работу после демо.</p>
+        <p>Поэтому более сильным результатом первых недель может быть совсем не Cloud Agents. А например, shared configuration repository, созданный вместе с внутренними инженерами, несколько проверенных rules и sub-agents, понятные quality gates и первые команды, которые уже используют этот baseline в реальной работе. Это выглядит менее эффектно на слайде для board meeting. Зато доказывает, что компания стала ближе к безопасному запуску агентов в масштабе.</p>
+
+        <div class="highlight-box">
+            <h4>Главный вывод</h4>
+            <p><strong>Не каждая компания, купившая AI tools, приобрела AI capability.</strong> Между лицензией и работающей AI Software Factory лежат общие практики, ownership, governance и довольно много не самой модной инженерной работы.</p>
+        </div>
+
+        <p>FDE нужен не для того, чтобы перескочить через эти этапы. Его задача — помочь пройти следующий этап быстрее, но так, чтобы клиент удержал результат после handoff.</p>
+        <p>В следующей части я хочу перейти от readiness к самим implementation scenarios. Будет множество интересных примеров из воркшопов:</p>
+        <ul>
+            <li>как выбрать первую automation</li>
+            <li>почему overall accuracy может оказаться опасной метрикой</li>
+            <li>как заранее определить ошибку агента, после которой automation придется отключить</li>
+            <li>и в какой момент клиенту действительно нужен SDK или внутренняя agent platform</li>
+        </ul>
+        <p>Потому что даже после правильной диагностики остается второй шанс все испортить: выбрать самый эффектный use case вместо самого полезного.</p>
+        <p>Успешного вам опыта интеграций!</p>
+        <p>Ну и подписывайтесь на мой телеграм канал <a href="https://t.me/ai_vs_devops">https://t.me/ai_vs_devops</a></p>
+
+    </section>
+
+</main>
+
+<footer class="footer">
+    <p>Cursor FDE Bootcamp — Часть 1 | Eugene Burachevskiy</p>
+    <p>AI vs DevOps</p>
+</footer>
+
+</body>
+</html>
