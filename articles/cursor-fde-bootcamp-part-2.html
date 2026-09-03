@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>70% accuracy может быть провалом: как выбрать первую AI automation — Cursor FDE Bootcamp, часть 2</title>
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://eugene-burachevskiy.github.io/ai-vs-devops-blog/articles/cursor-fde-bootcamp-part-2.html">
+    <meta property="og:title" content="70% accuracy может быть провалом: как выбрать первую AI automation — Cursor FDE Bootcamp, часть 2">
+    <meta property="og:description" content="Cursor FDE Bootcamp, часть 2: цена ошибки AI-агента, опасность overall accuracy, shutdown conditions, human-in-the-loop и выбор между Automation, SDK и внутренней платформой.">
+    <meta property="og:image" content="https://eugene-burachevskiy.github.io/ai-vs-devops-blog/images/cursor-fde-bootcamp-part2-cover.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="70% accuracy может быть провалом: как выбрать первую AI automation — Cursor FDE Bootcamp, часть 2">
+    <meta name="twitter:description" content="Cursor FDE Bootcamp, часть 2: цена ошибки AI-агента, опасность overall accuracy, shutdown conditions, human-in-the-loop и выбор между Automation, SDK и внутренней платформой.">
+    <meta name="twitter:image" content="https://eugene-burachevskiy.github.io/ai-vs-devops-blog/images/cursor-fde-bootcamp-part2-cover.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --bg-code: #0b101c;
+            --bg-sheet-top: #161e31;
+            --bg-sheet: #121929;
+            --text-primary: #f0f4f8;
+            --text-body: #b9c5d8;
+            --text-secondary: #94a3b8;
+            --text-muted: #6e7f97;
+            --accent-blue: #60a5fa;
+            --accent-blue-deep: #3b82f6;
+            --accent-cyan: #22d3ee;
+            --accent-purple: #a78bfa;
+            --accent-green: #34d399;
+            --accent-orange: #f59e0b;
+            --accent-red: #f87171;
+            --border-color: rgba(148, 163, 184, 0.16);
+            --border-light: rgba(148, 163, 184, 0.30);
+            --border-faint: rgba(148, 163, 184, 0.09);
+            --gradient-1: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
+            --shadow-glow: 0 8px 32px rgba(59, 130, 246, 0.18);
+            --shadow-sheet: 0 24px 80px rgba(2, 6, 17, 0.55);
+            --radius-block: 14px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-body);
+            font-size: 1.0625rem;
+            line-height: 1.75;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background:
+                radial-gradient(55rem 34rem at 15% -10%, rgba(59, 130, 246, 0.10), transparent 60%),
+                radial-gradient(45rem 30rem at 90% 8%, rgba(6, 182, 212, 0.06), transparent 60%);
+        }
+        ::selection { background: rgba(59, 130, 246, 0.38); color: #fff; }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: #26314a; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue-deep); }
+
+        .back-btn {
+            position: fixed;
+            top: 1.1rem;
+            left: 1.1rem;
+            z-index: 200;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 1.1rem;
+            background: rgba(13, 18, 32, 0.78);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .hero {
+            position: relative;
+            padding: 8.5rem 1.5rem 9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            text-align: center;
+        }
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            opacity: 0.18;
+            background-image: url('../images/hero_ai.jpg');
+            background-size: cover;
+            background-position: center;
+            filter: blur(4px);
+        }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(70% 100% at 50% 0%, rgba(59, 130, 246, 0.13), transparent 68%),
+                linear-gradient(180deg, rgba(10, 14, 26, 0.72) 0%, rgba(10, 14, 26, 0.92) 100%);
+            pointer-events: none;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 700px;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.95rem;
+            background: rgba(96, 165, 250, 0.09);
+            border: 1px solid rgba(96, 165, 250, 0.28);
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: var(--accent-blue);
+            margin-bottom: 1.6rem;
+        }
+        .hero h1 {
+            font-size: clamp(1.9rem, 4.6vw, 2.9rem);
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            line-height: 1.18;
+            margin-bottom: 1.4rem;
+            color: var(--text-primary);
+            text-wrap: balance;
+        }
+        .hero h1::after {
+            content: '';
+            display: block;
+            width: 56px;
+            height: 3px;
+            border-radius: 2px;
+            background: var(--gradient-1);
+            margin: 1.5rem auto 0;
+        }
+        .hero-subtitle {
+            font-size: 1.125rem;
+            line-height: 1.65;
+            color: var(--text-secondary);
+            max-width: 560px;
+            margin: 0 auto;
+            text-wrap: balance;
+        }
+        .hero-meta {
+            display: flex;
+            justify-content: center;
+            gap: 1.75rem;
+            flex-wrap: wrap;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 1.8rem;
+        }
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toc-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-faint);
+            padding: 0.85rem 0;
+        }
+        .toc-inner {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .toc-inner::-webkit-scrollbar { display: none; }
+        .toc-link {
+            padding: 0.45rem 0.95rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            transition: color 0.2s, background 0.2s, border-color 0.2s;
+        }
+        .toc-link:hover { color: var(--accent-blue); }
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: rgba(96, 165, 250, 0.09);
+            border-color: rgba(96, 165, 250, 0.28);
+        }
+        .pdf-link {
+            margin-left: auto;
+            color: var(--text-primary);
+            background: rgba(148, 163, 184, 0.08);
+            border-color: var(--border-color);
+        }
+        .pdf-link:hover {
+            color: var(--text-primary);
+            background: rgba(148, 163, 184, 0.15);
+            border-color: var(--border-light);
+        }
+        /* when a TOC bar is present, the sheet starts below it instead of overlapping up into it */
+        .toc-nav + .container { margin-top: 1.25rem; }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 740px;
+            margin: -3.75rem auto 0;
+            padding: clamp(1.75rem, 4.5vw, 3.25rem);
+            background: linear-gradient(180deg, var(--bg-sheet-top) 0%, var(--bg-sheet) 100%);
+            border: 1px solid var(--border-faint);
+            border-radius: 24px;
+            box-shadow: var(--shadow-sheet), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            animation: fadeInUp 0.55s ease-out;
+        }
+        .section {
+            padding: 2.5rem 0;
+            border-bottom: 1px solid var(--border-faint);
+        }
+        .section:last-child { border-bottom: none; }
+
+        .section-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .section-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
+        }
+        .section-title-group h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.25;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        .section-title-group p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            margin: 0;
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            margin: 2.75rem 0 1rem;
+            color: var(--text-primary);
+        }
+        h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            margin: 2.5rem 0 0.9rem;
+            color: var(--text-primary);
+        }
+        h4 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin: 2rem 0 0.75rem;
+            color: var(--accent-cyan);
+        }
+        p {
+            margin-bottom: 1.35em;
+            color: var(--text-body);
+            text-wrap: pretty;
+        }
+        .container > p:first-of-type {
+            font-size: 1.15rem;
+            line-height: 1.7;
+            color: #ccd6e6;
+            margin-bottom: 1.6em;
+        }
+        strong { color: var(--text-primary); font-weight: 600; }
+
+        a {
+            color: var(--accent-blue);
+            text-decoration: underline;
+            text-decoration-color: rgba(96, 165, 250, 0.35);
+            text-underline-offset: 3px;
+            transition: color 0.2s;
+        }
+        a:hover { color: #93c5fd; text-decoration-color: currentColor; }
+        a:focus-visible,
+        .back-btn:focus-visible {
+            outline: 2px solid var(--accent-blue);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        blockquote {
+            background: rgba(148, 163, 184, 0.06);
+            border-left: 3px solid var(--accent-blue);
+            padding: 1.4rem 1.75rem;
+            margin: 2rem 0;
+            border-radius: 0 var(--radius-block) var(--radius-block) 0;
+            font-style: italic;
+            color: #d3dce9;
+            position: relative;
+        }
+        blockquote::before {
+            content: '\201C';
+            font-size: 3.5rem;
+            color: var(--accent-blue);
+            opacity: 0.18;
+            position: absolute;
+            top: -0.75rem;
+            left: 0.9rem;
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 2rem 0;
+            border-radius: var(--radius-block);
+            border: 1px solid var(--border-faint);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        thead { background: rgba(148, 163, 184, 0.07); }
+        th {
+            padding: 0.9rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-light);
+            white-space: nowrap;
+        }
+        td {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid var(--border-faint);
+            color: var(--text-body);
+        }
+        tbody tr:hover { background: rgba(96, 165, 250, 0.05); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-faint);
+            border-radius: var(--radius-block);
+            padding: 1.4rem 1.5rem;
+            overflow-x: auto;
+            margin: 1.75rem 0;
+        }
+        code {
+            font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+        }
+        pre code { color: #e2e8f0; }
+        :not(pre) > code {
+            background: rgba(148, 163, 184, 0.13);
+            color: #67e8f9;
+            padding: 0.15em 0.45em;
+            border-radius: 6px;
+            font-size: 0.85em;
+        }
+
+        .highlight {
+            background: var(--bg-code);
+            border: 1px solid var(--border-faint);
+            border-radius: var(--radius-block);
+            overflow: hidden;
+            margin: 1.75rem 0;
+        }
+        .highlight pre {
+            margin: 0;
+            border: none;
+            border-radius: 0;
+            background: transparent !important;
+            padding: 1.4rem 1.5rem;
+        }
+
+        ul, ol {
+            margin: 1.5rem 0;
+            padding-left: 1.4rem;
+        }
+        li {
+            margin-bottom: 0.65em;
+            color: var(--text-body);
+        }
+        li::marker { color: var(--accent-blue); }
+
+        img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: 2.25rem auto;
+            border-radius: var(--radius-block);
+            border: 1px solid var(--border-faint);
+            box-shadow: 0 16px 48px rgba(2, 6, 17, 0.4);
+        }
+        img[width="289"] { max-width: 300px; }
+
+        .img-link { display: block; text-decoration: none; }
+        .img-link:hover img { border-color: rgba(96, 165, 250, 0.45); }
+        .image-caption {
+            text-align: center;
+            font-size: 0.85rem;
+            font-style: italic;
+            color: var(--text-muted);
+            margin: -1.5rem auto 2.25rem;
+            max-width: 92%;
+            line-height: 1.6;
+        }
+        .pipeline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: var(--accent-cyan);
+            text-align: center;
+            background: rgba(148, 163, 184, 0.05);
+            border: 1px solid var(--border-faint);
+            border-radius: var(--radius-block);
+            padding: 1rem 1.25rem;
+            margin: 1.75rem 0;
+        }
+        .footnote {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-top: -1rem;
+        }
+
+        .section-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: var(--radius-block);
+            margin: 2rem 0;
+            opacity: 0.85;
+            border: 1px solid var(--border-faint);
+            box-shadow: 0 16px 48px rgba(2, 6, 17, 0.4);
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+            margin: 2rem 0;
+        }
+        .card {
+            background: rgba(148, 163, 184, 0.05);
+            border: 1px solid var(--border-faint);
+            border-radius: var(--radius-block);
+            padding: 1.5rem;
+            transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+        }
+        .card:hover {
+            border-color: rgba(96, 165, 250, 0.45);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+        .card h4 {
+            margin-top: 0;
+            color: var(--text-primary);
+        }
+        .card p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px solid var(--border-faint);
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: rgba(148, 163, 184, 0.05);
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-faint);
+        }
+        .checklist li::before {
+            content: '✓';
+            color: var(--accent-green);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.09) 0%, rgba(6, 182, 212, 0.07) 100%);
+            border: 1px solid rgba(96, 165, 250, 0.25);
+            border-left: 3px solid var(--accent-blue);
+            border-radius: var(--radius-block);
+            padding: 1.5rem 1.75rem;
+            margin: 2rem 0;
+        }
+        .highlight-box h4 {
+            color: var(--accent-blue);
+            margin-top: 0;
+        }
+
+        .decision-tree {
+            background: rgba(148, 163, 184, 0.05);
+            border: 1px solid var(--border-faint);
+            border-radius: var(--radius-block);
+            padding: 1.75rem;
+            margin: 2rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 2;
+            overflow-x: auto;
+        }
+        .decision-tree .q { color: var(--accent-cyan); font-weight: 600; }
+        .decision-tree .a { color: var(--accent-green); }
+        .decision-tree .arrow { color: var(--text-muted); }
+
+        .summary-section {
+            background: linear-gradient(180deg, var(--bg-sheet-top) 0%, var(--bg-sheet) 100%);
+            border: 1px solid var(--border-faint);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin: 3.5rem 0;
+            box-shadow: var(--shadow-sheet), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        .summary-section h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .summary-item {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        .summary-item p {
+            font-size: 0.95rem;
+            margin: 0;
+        }
+        .summary-num {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 3rem 2rem 3.5rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.8;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .hero { padding: 7rem 1.25rem 6.5rem; }
+            .hero h1 { font-size: 1.8rem; }
+            .hero-subtitle { font-size: 1.02rem; }
+            .container {
+                margin: -2.5rem 1rem 0;
+                padding: 1.6rem 1.35rem 2rem;
+                border-radius: 18px;
+            }
+            .toc-inner { padding: 0 1rem; }
+            .pdf-link { margin-left: 0.25rem; }
+            .section-header { flex-direction: column; }
+            .section-number { width: 40px; height: 40px; font-size: 1rem; }
+            .section-title-group h2 { font-size: 1.5rem; }
+            .summary-section { padding: 1.5rem; }
+            .card-grid { grid-template-columns: 1fr; }
+            .back-btn { top: 0.85rem; left: 0.85rem; padding: 0.5rem 0.95rem; font-size: 0.8rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        @media print {
+            @page { size: A4; margin: 18mm 16mm; }
+            html, body {
+                background: #fff;
+                color: #111;
+                font-family: Roboto, Arial, sans-serif;
+                font-size: 10.5pt;
+                line-height: 1.55;
+            }
+            body *, body *::before, body *::after {
+                font-family: Roboto, Arial, sans-serif !important;
+            }
+            .hero-subtitle, .hero-meta, .hero-meta * {
+                font-family: "Roboto Mono", monospace !important;
+            }
+            body::before { display: none; }
+            .back-btn, .toc-nav, .pdf-link { display: none !important; }
+            .hero {
+                display: block;
+                min-height: 0;
+                padding: 0 0 8mm;
+                text-align: left;
+                break-after: avoid;
+            }
+            .hero-bg, .hero-overlay, .hero h1::after { display: none; }
+            .hero-content { max-width: none; }
+            .hero .hero-badge {
+                display: inline-block;
+                margin-bottom: 4mm;
+                padding: 0;
+                background: none !important;
+                border: none !important;
+                color: #555 !important;
+            }
+            .hero h1 {
+                color: #000 !important;
+                font-size: 21pt;
+                line-height: 1.2;
+                margin-bottom: 4mm;
+                text-align: center;
+            }
+            .hero-subtitle, .hero-meta, p, li, td, th, .image-caption, .footnote {
+                color: #222 !important;
+            }
+            .hero-subtitle {
+                max-width: 165mm;
+                margin: 0 auto;
+                font-size: 10pt;
+                line-height: 1.55;
+                text-align: justify;
+                text-justify: inter-character;
+                text-align-last: center;
+            }
+            .hero-meta { margin-top: 4mm; font-size: 8.5pt; }
+            h2, h3, h4, strong { color: #000 !important; }
+            h2, h3, h4 { break-after: avoid; }
+            h2 { font-size: 16pt; }
+            h3 { font-size: 13pt; }
+            h4 { color: #111 !important; }
+            a { color: #111 !important; text-decoration: underline; }
+            .container {
+                max-width: none;
+                margin: 0;
+                padding: 0;
+                border: none;
+                box-shadow: none;
+                background: none;
+                animation: none;
+            }
+            .section { padding: 7mm 0; border-bottom-color: #ddd; }
+            .section-header {
+                display: block;
+                break-inside: avoid;
+                page-break-inside: avoid;
+                break-after: avoid;
+                page-break-after: avoid;
+            }
+            .section-number { display: none; }
+            .summary-num {
+                background: #333;
+                color: #fff;
+                box-shadow: none;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .highlight, pre, .decision-tree, .table-wrapper, .card, blockquote, .highlight-box, .summary-section, .pipeline {
+                background: #f7f7f7 !important;
+                border-color: #c8c8c8 !important;
+                box-shadow: none !important;
+            }
+            .pipeline {
+                color: #000 !important;
+                font-size: 12.5pt;
+                font-weight: 700;
+            }
+            .highlight pre, pre, code, .highlight span {
+                color: #111 !important;
+                background: transparent !important;
+            }
+            :not(pre) > code {
+                background: #eee !important;
+                color: #111 !important;
+            }
+            img, .section-image {
+                max-width: 100%;
+                height: auto;
+                box-shadow: none;
+                opacity: 1;
+                break-inside: avoid;
+            }
+            .image-caption { break-before: avoid; }
+            li::marker { color: #555 !important; }
+            blockquote, .card, .highlight-box, .summary-section, .table-wrapper, tr { break-inside: avoid; }
+            .footer { color: #555 !important; }
+        }
+    </style>
+    <style>
+        /* category accent: AI Development Methodology */
+        .hero-badge {
+            background: rgba(34, 211, 238, 0.09);
+            border-color: rgba(34, 211, 238, 0.28);
+            color: var(--accent-cyan);
+        }
+    </style>
+
+    <style>
+        /* before/after scenario gallery */
+        .ba-entry { margin: 2.75rem 0; }
+        .ba-entry h3 { margin-bottom: 0.35rem; }
+        .ba-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin: 0 0 1.1rem;
+        }
+        .ba-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.15rem;
+        }
+        .ba-label {
+            display: inline-flex;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            padding: 0.18rem 0.65rem;
+            border-radius: 999px;
+            margin-bottom: 0.6rem;
+            color: var(--accent-cyan);
+            background: rgba(34, 211, 238, 0.09);
+            border: 1px solid rgba(34, 211, 238, 0.28);
+        }
+        .ba-panel.after .ba-label {
+            color: var(--accent-green);
+            background: rgba(52, 211, 153, 0.09);
+            border-color: rgba(52, 211, 153, 0.28);
+        }
+        .ba-panel img { margin: 0; }
+        @media (max-width: 768px) {
+            .ba-grid { grid-template-columns: 1fr; }
+        }
+        @media print {
+            .ba-grid { grid-template-columns: 1fr 1fr; gap: 6mm; }
+            .ba-label { color: #555 !important; border-color: #bbb !important; background: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<a href="../index.html" class="back-btn">← Back to Blog</a>
+
+<!-- Hero -->
+<header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <div class="hero-badge">AI Development Methodology</div>
+        <h1>70% accuracy может быть провалом: как выбрать первую AI automation</h1>
+        <p class="hero-subtitle">Цена ошибки AI-агента: как FDE выбирает первую automation, проектирует shutdown conditions и решает, когда действительно нужен SDK или внутренняя платформа. Часть 2.</p>
+        <div class="hero-meta">
+            <span>📅 September 3, 2026</span>
+            <span>⏱️ 15 min read</span>
+            <span>🌐 Russian</span>
+        </div>
+    </div>
+</header>
+
+<!-- TOC -->
+<nav class="toc-nav">
+    <div class="toc-inner">
+        <a href="#automation" class="toc-link">Выбор automation</a>
+        <a href="#accuracy" class="toc-link">Accuracy</a>
+        <a href="#anchor-bank" class="toc-link">Anchor Bank</a>
+        <a href="#sdk-or-platform" class="toc-link">SDK / Platform</a>
+        <a href="#metrics" class="toc-link">Метрики</a>
+        <a href="#conclusion" class="toc-link">Итоги</a>
+        <a href="#scenarios" class="toc-link">Слайды</a>
+        <a href="../docs/cursor-fde-bootcamp-part-2.pdf" class="toc-link pdf-link" target="_blank" rel="noopener">Download as PDF</a>
+    </div>
+</nav>
+
+<main class="container">
+
+    <p>Представьте: CI упал, агент разобрал логи и уверенно сказал, что это flaky test, а не настоящая regression. Еще один бессмысленный rerun, можно не отвлекать инженера на долгий разбор.</p>
+    <p>На мониторинг дашборде у этого агента уже больше 70% accuracy. Для первой версии выглядит вполне достойно. Есть понятный use case, измеримая метрика и часы ручной работы, которые эта автоматизация должна сэкономить. Можно релизить рабочий пилот проект и показывать результат?</p>
+    <p>Проблема в оставшихся ошибках. Если настоящий flake будет принят за regression, инженер потратит лишнее время. Неприятно, но переживаемо. Если же реальная regression будет помечена как flake, команда может пропустить дефект. В общей accuracy обе ошибки выглядят одинаково. Для бизнеса и production у них совершенно разная цена.</p>
+    <p>И вот это, пожалуй, лучший переход от <a href="https://eugene-burachevskiy.github.io/ai-vs-devops-blog/articles/cursor-fde-bootcamp-part-1.html">первой части статьи</a> ко второй. До этого мы говорили о readiness: как понять AI maturity компании, найти bottleneck внутри SDLC и не запускать автономных агентов поверх хаоса. Допустим, эту работу мы уже сделали. Shared scaffolding появился, ownership определен, baseline собран. Теперь можно наконец что-то автоматизировать.</p>
+    <p>Но здесь появляется второй шанс все испортить.</p>
+    <p>Можно выбрать самый эффектный use case. Можно взять первую удобную метрику, поставить target и через месяц объявить пилот успешным. А можно сначала задать более неприятный вопрос: <strong>какую ошибку этого агента мы действительно можем себе позволить?</strong></p>
+    <p>На Cursor FDE Bootcamp этот вопрос разбирался через workshop scenario компании Northstar Logistics. Это учебный кейс, а не публичная история реального клиента. После Enterprise Readiness — shared configuration repository уже используют 22 из 30 команд, review turnaround в сценарии сократился с 18 до 9 часов, бывшие скептики начали контрибьютить rules, а DevEx leader стал owner-ом automation roadmap.</p>
+    <p>То есть компания уже не находится в состоянии «давайте сначала научим всех пользоваться Cursor». Foundation существует, внутренние инженеры умеют его развивать, и можно выбирать первую async automation.</p>
+
+    <a href="../images/cursor-fde-bootcamp/05-first-automation-training-scenario.jpg" class="img-link">
+        <img src="../images/cursor-fde-bootcamp/05-first-automation-training-scenario.jpg" alt="First automation selection workshop scenario">
+    </a>
+    <p class="image-caption">Workshop scenario: after the readiness foundation is adopted, choose a first automation with bounded scope, an existing baseline, and a measurable costly-error profile. Source: Cursor FDE Bootcamp v1, May 2026.</p>
+
+    <p>Выбор пал на flaky-test triage. Причины выглядят разумно: инженеры сообщают примерно о шести часах в неделю, потраченных на flakes, scope можно ограничить одним test runner, а flake-rate dashboard уже дает baseline. Первую рабочую версию реально проверить за 2–3 недели.</p>
+    <p>Первоначальный success criterion тоже кажется нормальным: не менее 70% accuracy и два DevEx инженера, которые смогут поддерживать automation. Я бы и сам несколько лет назад вполне мог принять такую метрику. Она конкретная, легко помещается в status report и позволяет показать прогресс одной цифрой.</p>
+    <p>Но сама по себе она почти ничего не говорит о безопасности решения. Нужно отдельно понять, где агент ошибается, как часто он предлагает проигнорировать реальную проблему и какой результат заставит нас немедленно отключить automation.</p>
+    <p>Поэтому во второй части я хочу разобрать уже не readiness, а сами implementation decisions:</p>
+    <ul>
+        <li>как выбрать первую automation по value и failure cost;</li>
+        <li>почему overall accuracy может скрывать самый опасный тип ошибки;</li>
+        <li>как заранее определить shutdown condition и не придумывать его после первого incident;</li>
+        <li>где human-in-the-loop действительно защищает процесс, а где остается формальностью;</li>
+        <li>когда достаточно event-driven Automation, а когда клиенту действительно нужен SDK или внутренняя платформа агентов.</li>
+    </ul>
+    <div class="highlight-box">
+        <h4>Ключевой вывод</h4>
+        <p>Лучшая первая automation редко бывает самой впечатляющей. Обычно это bounded workflow, где уже есть baseline, результат можно дешево проверить, а ошибка не успеет незаметно пройти через половину компании.</p>
+    </div>
+
+    <section class="section" id="automation">
+        <div class="section-header">
+            <div class="section-number">1</div>
+            <div class="section-title-group"><h2>Как выбрать первую automation</h2></div>
+        </div>
+
+        <p>В workshop scenario у Northstar было пять кандидатов: dependency updates, flaky-test triage, переписывание PR descriptions, генерация incident runbooks и обновление API clients. Для каждого можно быстро собрать demo. Но demo отвечает только на вопрос «может ли агент один раз выполнить задачу?». Для production этого мало.</p>
+        <p>Начинать стоит не с возможностей модели, а с текущего workflow. Как часто возникает задача? Сколько дорогого ручного времени она отнимает? Можно ли ограничить первую версию одним test runner или группой репозиториев? Насколько быстро человек проверит output? И главное, какая ошибка принесет наибольший ущерб?</p>
+        <p>Хороший первый пилот обычно довольно скучный: bounded scope, известные сигналы, существующий baseline и понятный owner. Это полезнее, чем automation, которая умеет все понемногу, но после ошибки непонятно, что именно чинить: модель, context, environment или team conventions.</p>
+        <p>Кандидатов удобно прогнать через короткий scorecard:</p>
+
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Критерий</th><th>Что нужно выяснить</th></tr></thead>
+            <tbody><tr><td>Frequency и toil</td><td>Как часто запускается workflow и сколько ручного времени он отнимает?</td></tr><tr><td>Scope и baseline</td><td>Можно ли ограничить первую версию и измерить состояние до запуска?</td></tr><tr><td>Failure cost</td><td>Какая ошибка будет самой дорогой?</td></tr><tr><td>Reviewability</td><td>Может ли человек быстро проверить output?</td></tr><tr><td>Ownership</td><td>Кто будет менять и при необходимости отключать automation?</td></tr><tr><td>Next pattern</td><td>Поможет ли этот use case построить следующую automation?</td></tr></tbody>
+        </table>
+    </div>
+
+        <p>Этот scorecard нужен, чтобы вслух проговорить то, что обычно прячется за красивым demo.</p>
+        <p>И один вопрос я бы вынес отдельно:</p>
+        <blockquote><p>Какой результат заставит нас остановить пилот и отключить automation?</p></blockquote>
+        <p>Если команда не может ответить до запуска, после первого инцидента ответ придется придумывать под давлением.</p>
+    </section>
+
+    <section class="section" id="accuracy">
+        <div class="section-header">
+            <div class="section-number">2</div>
+            <div class="section-title-group"><h2>Почему 70% accuracy может быть опасной метрикой</h2></div>
+        </div>
+
+        <p>Вернемся к flaky-test triage. Формально агент решает classification problem, поэтому overall accuracy выглядит естественным success criterion. Но у двух типов ошибки разная цена:</p>
+
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Реальное состояние</th><th>Вердикт агента</th><th>Последствие</th></tr></thead>
+            <tbody><tr><td>Flaky test</td><td>Flaky test</td><td>Экономим ручной разбор</td></tr><tr><td>Flaky test</td><td>Regression</td><td>Тратим лишнее время инженера</td></tr><tr><td>Regression</td><td>Regression</td><td>Передаем реальную проблему на разбор</td></tr><tr><td>Regression</td><td>Flaky test</td><td><strong>Рискуем скрыть настоящий дефект</strong></td></tr></tbody>
+        </table>
+    </div>
+
+        <p>Если flake назван regression, инженер проведет лишний разбор. Если настоящая regression названа flake, команда может сделать rerun, увидеть зеленый CI и пропустить дефект. Для accuracy это две одинаковые ошибки. Для production процесса вторая намного опаснее.</p>
+        <p>Поэтому важна precision для вердикта «это flake»: когда агент предлагает проигнорировать падение, насколько часто он действительно прав? Низкий recall на первом этапе может быть приемлем. Automation сэкономит меньше времени и отправит часть flakes человеку, зато будет ошибаться в более безопасную сторону.</p>
+        <p>До выбора метрики полезно выписать confusion matrix обычными словами и спросить: что произойдет после каждого решения агента, кто заметит ошибку и можно ли отменить действие до влияния на production?</p>
+        <p>Shutdown condition можно связать с подтвержденным случаем, когда regression была помечена как flake, или с падением precision ниже согласованного threshold. Конкретные числа зависят от уверенности принятия рисков компанией. Важно определить их до запуска, назначить человека с правом остановить automation и знать, как вернуть ручной flow.</p>
+        <p>Поэтому фраза «наш агент достиг 70% accuracy» теперь вызывает у меня дополнительные вопросы. Семьдесят процентов чего? Какие ошибки попали в остальные тридцать? И что система сделала после каждого такого вердикта?</p>
+        <p><strong>Overall accuracy часто выбирают тогда, когда еще не оценили стоимость разных типов ошибок.</strong></p>
+    </section>
+
+    <section class="section" id="anchor-bank">
+        <div class="section-header">
+            <div class="section-number">3</div>
+            <div class="section-title-group"><h2>Anchor Bank: human-in-the-loop должен что-то значить</h2></div>
+        </div>
+
+        <p>Следующий workshop scenario переносит нас в регулируемый банк. В Anchor Bank около 600 инженеров, Enterprise Readiness уже завершен, а rules и sub-агенты используют примерно 80% команд. То есть спорить о базовом adoption здесь уже не нужно.</p>
+        <p>Проблема находится в SOX documentation. Senior engineers тратят на нее около 20 часов в неделю: читают изменения, связывают их с business justification, описывают риски и определяют нужных reviewers.</p>
+        <p>Предложенная automation запускается при создании PR в SOX-relevant repository. Агент читает diff, commit history и связанный Jira ticket, после чего готовит draft с business justification, risk summary и reviewer routing. Затем человек редактирует документ и делает sign-off.</p>
+
+    <a href="../images/cursor-fde-bootcamp/06-regulated-workflow-training-scenario.jpg" class="img-link">
+        <img src="../images/cursor-fde-bootcamp/06-regulated-workflow-training-scenario.jpg" alt="Regulated workflow with human sign-off">
+    </a>
+    <p class="image-caption">Workshop scenario: automate preparation of SOX change documentation while preserving human accountability for edits and approval. Productivity is not enough; the launch criteria need a quality floor and an escape hatch. Source: Cursor FDE Bootcamp v1, May 2026.</p>
+
+        <p>Мне нравится, что scope сразу ограничивает полномочия агента:</p>
+        <ul>
+            <li>никакого auto-approval;</li>
+            <li>никакого sign-off от имени агента;</li>
+            <li>никакого cross-repository dependency analysis в первой версии.</li>
+        </ul>
+        <p>На бумаге это выглядит как хороший human-in-the-loop. <strong>Агент забирает рутинную подготовку, а ответственное решение остается у человека.</strong> Но одного присутствия человека в схеме недостаточно.</p>
+        <p>Если reviewer получает длинный AI-generated document, не понимает, каким данным доверять, и просто нажимает approve, human-in-the-loop становится декоративным. Поэтому нужно измерять не только сэкономленные часы. Нужны quality floor, доля существенных исправлений человеком и понятный shutdown condition.</p>
+        <p>В initial proposal были три пилотных репы, цель сократить время senior engineers на 50% и получить approval формата audit trail от Compliance. Хорошее начало, но оно отвечает в основном на вопросы productivity и auditability.</p>
+        <p>А что будет, если агент несколько раз пропустит важный риск? Какое количество существенных исправлений покажет, что draft пока только добавляет review workload? Какой результат заставит Compliance остановить пилот? И есть ли среди трех репозиториев хотя бы один достаточно сложный, чтобы пилот проверял реальный workflow, а не специально выбранный happy path?</p>
+        <p>Вот здесь shutdown condition перестает быть абстрактным пунктом из governance checklist. Он может звучать примерно так: если агент пропускает risk category, которую policy требует отражать в SOX documentation, automation приостанавливается и workflow возвращается к ручному режиму до нового review. Конкретный threshold определяет сама компания, но договориться о нем нужно заранее.</p>
+        <p>Для regulated workflow я бы проверял четыре слоя:</p>
+
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Слой</th><th>Что должно быть определено</th></tr></thead>
+            <tbody><tr><td>Permissions</td><td>Какие репы и данные агент может читать, куда может писать</td></tr><tr><td>Quality floor</td><td>Какие ошибки недопустимы и сколько human corrections приемлемо</td></tr><tr><td>Accountability</td><td>Кто редактирует, подписывает и несет ответственность за результат</td></tr><tr><td>Escape hatch</td><td>Кто и при каком событии останавливает automation и возвращает manual flow</td></tr></tbody>
+        </table>
+    </div>
+
+        <p><strong>Human-in-the-loop защищает процесс только тогда, когда у человека есть время на проверку, достаточный контекст и право не согласиться с агентом.</strong></p>
+    </section>
+
+    <section class="section" id="lighthouse-wealth">
+        <div class="section-header">
+            <div class="section-number">4</div>
+            <div class="section-title-group"><h2>Lighthouse Wealth: audit trail не проверяет правильность</h2></div>
+        </div>
+
+        <p>В Lighthouse Wealth ситуация другая. Это wealth-management fintech примерно с 350 инженерами. Enterprise Readiness якобы завершил другой партнер шесть месяцев назад, adoption со слов клиента «хороший», а теперь компания хочет автоматизировать подключение новых RIA.</p>
+        <p>RIA здесь означает <strong>Registered Investment Adviser</strong>, зарегистрированную инвестиционно-консультационную компанию, которая будет работать через platform Lighthouse. Это не onboarding одного пользователя. Подключение каждой новой организации требует согласованных изменений в шести микросервисах и занимает 3–5 дней работы.</p>
+        <p>Идея automation выглядит очень убедительно: получить metadata нового контракта, сгенерировать configuration PRs во всех шести сервисах и отправить summary в Slack для sign-off.</p>
+
+    <a href="../images/cursor-fde-bootcamp/06a-lighthouse-wealth-training-scenario.jpg" class="img-link">
+        <img src="../images/cursor-fde-bootcamp/06a-lighthouse-wealth-training-scenario.jpg" alt="Lighthouse Wealth cross-service onboarding workshop scenario">
+    </a>
+    <p class="image-caption">Workshop scenario: a new RIA onboarding event triggers configuration pull requests across six services. Inherited readiness, cross-service correctness, ownership, and auditability all need to be verified before scaling. Source: Cursor FDE Bootcamp v1, May 2026.</p>
+
+        <p>Success criteria тоже звучат солидно: провести минимум три onboarding events end-to-end, сократить engineering time на 70% и сохранить SOC 2 audit trail для каждого действия агента.</p>
+        <p>Но этот scenario содержит сразу две ловушки.</p>
+        <p>Первая: <strong>«Enterprise Readiness уже сделан» является гипотезой, а не фактом.</strong> FDE не видел качество inherited rules, не знает, используют ли их senior engineers, и не проверял review practices. Поэтому первая неделя такого engagement должна начинаться с аудита foundation, а не с генерации PR в шести сервисах.</p>
+        <p>Вторая ловушка: audit trail показывает, что сделал агент. Он не показывает, что configuration PRs правильные.</p>
+        <p>Можно идеально записать каждый tool call, input и generated diff, а потом последовательно внести одну и ту же ошибку во все шесть сервисов. И получим, что с точки зрения auditability система прекрасна. А с точки зрения onboarding она сломана.</p>
+        <p>Значит, к success criteria нужно добавить correctness: сколько PR проходят review без существенных изменений, сколько onboarding events завершились без rollback и какие cross-service invariants проверяются до merge. Audit log нужен для расследования и compliance, но не заменяет tests и review.</p>
+        <p>Есть и organizational gap. В рабочих sessions отсутствует VP, чьи команды владеют этими шестью сервисами. Это возвращает нас к мысли из первой статьи: иногда отсутствующий stakeholder является отсутствующей системной зависимостью. Slack sign-off не спасет workflow, если у engagement нет человека с полномочиями договориться между service owners.</p>
+        <p><strong>Previously implemented foundation нужно проверять так же, как inherited codebase. А auditability и correctness должны иметь разные acceptance criteria.</strong></p>
+    </section>
+
+    <section class="section" id="sdk-or-platform">
+        <div class="section-header">
+            <div class="section-number">5</div>
+            <div class="section-title-group"><h2>Automation, SDK или платформа агентов</h2></div>
+        </div>
+
+        <p>После нескольких таких сценариев легко прийти к противоположной ошибке: раз automation полезна, давайте сразу возьмем SDK и построим максимально гибкое решение. SDK звучит как более серьезный engineering. Но он не является продвинутой версией Automation. Это другой product surface.</p>
+        <p>Если запрос звучит как «на каждом PR», «каждое утро», «при падении CI» или «при появлении Sentry issue», скорее всего, перед нами event-driven Automation. Есть trigger, ограниченный workflow и понятный output.</p>
+        <p>SDK нужен, когда агент становится частью продукта клиента: пользователи работают с ним внутри custom UI, компании нужен контроль lifecycle и streaming, либо настоящая platform team строит shared runtime для нескольких consuming teams.</p>
+
+    <a href="../images/cursor-fde-bootcamp/07-sdk-vs-automation.jpg" class="img-link">
+        <img src="../images/cursor-fde-bootcamp/07-sdk-vs-automation.jpg" alt="When and when not to use the SDK">
+    </a>
+    <p class="image-caption">Repeated event-driven work usually begins with Automations. Use an SDK when the agent becomes part of the customer’s application or a real internal platform. Source: Cursor FDE Bootcamp v1, May 2026.</p>
+
+        <p>На bootcamp было три коротких scenario, которые хорошо показывают эту границу.</p>
+        <h3>Unnamed chip-design vendor: настоящий SDK use case</h3>
+        <p>Неназванный chip-design vendor встраивает Verilog-агента прямо в свой продукт. Пользователь работает с ним внутри customer-owned experience, а Cursor SDK предоставляет агентный harness. Это почти textbook example: custom UX здесь является частью самого продукта, а не красивой оболочкой поверх внутренней automation.</p>
+        <h3>Cascade Health Network: custom UI еще не делает platform</h3>
+        <p>Cascade Health хочет проверять reproducibility исследовательского кода: environment pinning, deterministic seeds и data lineage. В proposal появляется custom researcher-facing UI на SDK.</p>
+        <p>Но запрос описывает gap внутри review lifecycle, а не reusable platform. А в их рабочей группе даже нет platform team. Значит, custom UI может просто съесть бюджет, не решив основную проблему. Здесь логичнее AI SDLC Integration с существующим review process и участием clinical compliance.</p>
+        <h3>Apex Trading: advanced users еще не означают platform readiness</h3>
+        <p>В Apex Trading Cursor используют все 180 инженеров, компания уже прошла три engagement, а 12 strategy teams хотят свои инструменты. Кажется, что internal platform напрашивается сама.</p>
+        <p>Но platform lead отсутствует, а каждая strategy team исторически строит собственный tooling. Один SDK-агент для backtesting может отлично заработать в выбранной команде и никогда не стать общим pattern. Техническая зрелость и энтузиазм команд не создают platform operating model автоматически. Возможно, здесь нужен отдельный discovery или Strategic Build Partnership, а не обещание full scoped platform за четыре недели.</p>
+        <p>Эти примеры удобно свести к простому decision tree:</p>
+        <div class="decision-tree">
+            <span class="q">Запрос начинается с «при каждом X» или «когда происходит Y»?</span><br>
+            ├── <span class="a">Да → Сначала Automation.</span><br>
+            └── Нет<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="q">Агент встроен в продукт клиента и нужен custom UX?</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="a">Да → Рассмотреть SDK.</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="q">Несколько команд строят решения на shared primitives?</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="a">Да → Проверить platform readiness.</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;└── <span class="q">Gap находится между стадиями SDLC?</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span class="a">Да → Рассмотреть AI SDLC Integration.</span>
+        </div>
+        <p>Главная мысль здесь простая: <strong>выбирайте product surface по форме workflow, а не по тому, насколько технически продвинутым он звучит.</strong></p>
+    </section>
+
+    <section class="section" id="northstar-platform">
+        <div class="section-header">
+            <div class="section-number">6</div>
+            <div class="section-title-group"><h2>Northstar шесть месяцев спустя: проверка вторым агентом</h2></div>
+        </div>
+
+        <p>Вернемся к Northstar в последний раз. В учебном timeline прошло шесть месяцев. Flaky-test triage уже работает в production с 84% accuracy, DevEx team самостоятельно выпустила еще двух агентов для dependency updates и on-call triage, а три product teams хотят собственные решения.</p>
+        <p>Теперь запрос на внутреннюю платформу агентов выглядит совсем иначе. Он появляется не потому, что CTO увидел SDK на demo, а потому что внутри компании уже есть несколько работающих агентов, owners и consuming teams. Начинают повторяться общие задачи: authentication, logging, tracing, evaluation harness и границы ответственности между platform и product teams.</p>
+
+    <a href="../images/cursor-fde-bootcamp/08-platform-readiness-training-scenario.jpg" class="img-link">
+        <img src="../images/cursor-fde-bootcamp/08-platform-readiness-training-scenario.jpg" alt="Internal agent platform readiness workshop scenario">
+    </a>
+    <p class="image-caption">Workshop scenario: an internal platform becomes credible only after the customer has independently shipped agents and multiple consuming teams need shared primitives. Source: Cursor FDE Bootcamp v1, May 2026.</p>
+
+        <p>В качестве reference implementation предлагается mobile release-notes generator. Но сам reference-агент здесь не самый важный deliverable. Гораздо интереснее acceptance criteria:</p>
+        <ul>
+            <li>platform team самостоятельно скаффолдят второго агента;</li>
+            <li>хотя бы один mobile engineer может расширить решение без помощи platform team;</li>
+            <li>референсный-агент-решение используется минимум в двух mobile releases;</li>
+            <li>ownership boundary между командами описана и проверена на практике.</li>
+        </ul>
+        <p>Именно второй самостоятельно построенный агент является настоящим platform test. Первый мог получиться благодаря FDE, удачному demo repository и людям, которые уже знали все детали. Второй показывает, что shared primitives действительно можно переиспользовать без постоянной внешней помощи.</p>
+
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Что мы утверждаем</th><th>Слабое доказательство</th><th>Сильное доказательство</th></tr></thead>
+            <tbody><tr><td>Агент работает</td><td>Один успешный demo run</td><td>Повторные production runs проходят quality gates</td></tr><tr><td>Workflow изменился</td><td>Пользователи открывали инструмент</td><td>Cycle time или manual toil меняются без потери качества</td></tr><tr><td>Мы построили platform</td><td>Есть один reusable-looking агент</td><td>Клиент самостоятельно строит и поддерживает следующего агента</td></tr></tbody>
+        </table>
+    </div>
+
+        <p>Здесь хорошо замыкается идея capability transfer из первой части. Настоящий deliverable FDE не заканчивается на working code. У клиента должен остаться owner, runbook, evaluation process, shutdown procedure и способность сделать следующее изменение без автора первой версии.</p>
+        <div class="highlight-box">
+            <h4>Проверка платформы</h4>
+            <p>Если клиент не может без вас построить второго агента, вы построили одного агента, а не platform.</p>
+        </div>
+    </section>
+
+    <section class="section" id="metrics">
+        <div class="section-header">
+            <div class="section-number">7</div>
+            <div class="section-title-group"><h2>Что в итоге измерять</h2></div>
+        </div>
+
+        <p>Четыре основных сценария были про разные задачи, но паттерн оценки у них общий:</p>
+        <div class="pipeline">Adoption signal → Engineering outcome → Business outcome → Capability transfer</div>
+        <p>Для flaky-test triage недостаточно посчитать runs. Нужно видеть безопасную precision, сокращение debugging toil и DevEx engineers, которые управляют automation.</p>
+        <p>Для SOX documentation недостаточно измерить сэкономленные часы. Нужны quality floor, human accountability и approval от Compliance.</p>
+        <p>Для RIA onboarding недостаточно полного audit trail. Нужны корректные cross-service PRs, реальное сокращение lead time и service owners, согласные поддерживать workflow.</p>
+        <p>Для internal platform недостаточно одного reference-агента. Platform team должна самостоятельно построить следующий, а consuming team должна уметь его расширить.</p>
+        <p>При этом <strong>на итоговом dashboard должна быть хотя бы одна метрика, которую агент способен ухудшить</strong>. Иначе dashboard почти гарантированно будет показывать только активность и экономию, но не риски.</p>
+    </section>
+
+    <section class="section" id="conclusion">
+        <div class="section-header">
+            <div class="section-number">8</div>
+            <div class="section-title-group"><h2>Вместо заключения: какой результат остается после FDE</h2></div>
+        </div>
+
+        <p>В первой части мы начинали с компании, которая хотела быстро показать Cloud-агентов совету директоров. Там правильным решением было не спешить с autonomy и сначала построить capability.</p>
+        <p>Во второй части foundation уже готов. Но этого оказалось недостаточно. Можно выбрать неправильный use case, оптимизировать удобную accuracy, сделать human review формальностью или построить SDK solution там, где хватило бы Automation.</p>
+        <p>Для меня главный урок всех этих workshop scenarios в том, что production AI integration начинается не с выбора модели и даже не с архитектуры агента. Сначала нужно определить цену ошибки, способ проверки и человека, который имеет право сказать «стоп». Затем выбрать самый простой product surface, который решает конкретный workflow. И только после этого думать о масштабировании.</p>
+
+    <a href="../images/cursor-fde-bootcamp/09-customer-ownership.jpg" class="img-link">
+        <img src="../images/cursor-fde-bootcamp/09-customer-ownership.jpg" alt="Built so the customer team keeps shipping">
+    </a>
+    <p class="image-caption">The durable result is not a custom artifact. It is a system fitted to the customer’s stack, built with their engineers, and owned by them after handoff. Source: Cursor FDE Bootcamp v1, May 2026.</p>
+
+        <p>Первый агент доказывает, что технология может работать. Второй агент, построенный, запущенный и улучшенный самим клиентом, доказывает, что engagement сработал.</p>
+        <div class="highlight-box">
+            <h4>Главный вывод</h4>
+            <p>Настоящий deliverable FDE — это независимость клиента.</p>
+        </div>
+        <p>Успешного вам опыта интеграций!</p>
+        <p>Ну и подписывайтесь на мой телеграм канал: <a href="https://t.me/ai_vs_devops" target="_blank" rel="noopener">https://t.me/ai_vs_devops</a></p>
+    </section>
+
+    <section class="section" id="scenarios">
+        <div class="section-header">
+            <div class="section-number">A</div>
+            <div class="section-title-group"><h2>Приложение: сценарии компаний — до и после</h2></div>
+        </div>
+
+
+        <p>Бонус для тех, кто дочитал: все сценарии компаний из воркшопов bootcamp на одной странице. Слева — состояние компании и ее запрос (setup), справа — рекомендация FDE. Все истории учебные, из тренировочного deck, а не публичные кейсы клиентов; цифры — условия упражнений, а не подтвержденные результаты.</p>
+        <div class="ba-entry">
+            <h3>Northstar Logistics — Stage 1</h3>
+            <p class="ba-desc">B2B SaaS, 250 инженеров, 85% active usage, но нет общих rules и configuration repository. Вместо Cloud Agents предлагается двухнедельный Enterprise Readiness.</p>
+            <div class="ba-grid">
+                <figure class="ba-panel before">
+                    <span class="ba-label">Before</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/northstar-readiness-before.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/northstar-readiness-before.jpg" alt="Northstar Logistics — Stage 1: setup panel" loading="lazy"></a>
+                </figure>
+                <figure class="ba-panel after">
+                    <span class="ba-label">After</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/northstar-readiness-after.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/northstar-readiness-after.jpg" alt="Northstar Logistics — Stage 1: FDE recommendation panel" loading="lazy"></a>
+                </figure>
+            </div>
+        </div>
+
+        <div class="ba-entry">
+            <h3>St. Catherine Health System</h3>
+            <p class="ba-desc">Regional healthcare, 120 инженеров, 400+ открытых PR, HIPAA и FDA-style change control. Запрос на Cloud Agents против бэклога вместо работы с foundational adoption.</p>
+            <div class="ba-grid">
+                <figure class="ba-panel before">
+                    <span class="ba-label">Before</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/st-catherine-before.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/st-catherine-before.jpg" alt="St. Catherine Health System: setup panel" loading="lazy"></a>
+                </figure>
+                <figure class="ba-panel after">
+                    <span class="ba-label">After</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/st-catherine-after.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/st-catherine-after.jpg" alt="St. Catherine Health System: FDE recommendation panel" loading="lazy"></a>
+                </figure>
+            </div>
+        </div>
+
+        <div class="ba-entry">
+            <h3>Permian Energy</h3>
+            <p class="ba-desc">Corporate IT с заметным adoption и полностью изолированная OT-организация. Автоматизация только для pipeline team в corporate cloud, OT — вне scope.</p>
+            <div class="ba-grid">
+                <figure class="ba-panel before">
+                    <span class="ba-label">Before</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/permian-before.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/permian-before.jpg" alt="Permian Energy: setup panel" loading="lazy"></a>
+                </figure>
+                <figure class="ba-panel after">
+                    <span class="ba-label">After</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/permian-after.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/permian-after.jpg" alt="Permian Energy: FDE recommendation panel" loading="lazy"></a>
+                </figure>
+            </div>
+        </div>
+
+        <div class="ba-entry">
+            <h3>Anchor Bank</h3>
+            <p class="ba-desc">600 инженеров, 80% adoption, 20 часов в неделю senior engineers на SOX documentation. Агент готовит draft, человек редактирует и подписывает.</p>
+            <div class="ba-grid">
+                <figure class="ba-panel before">
+                    <span class="ba-label">Before</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/anchor-bank-before.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/anchor-bank-before.jpg" alt="Anchor Bank: setup panel" loading="lazy"></a>
+                </figure>
+                <figure class="ba-panel after">
+                    <span class="ba-label">After</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/anchor-bank-after.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/anchor-bank-after.jpg" alt="Anchor Bank: FDE recommendation panel" loading="lazy"></a>
+                </figure>
+            </div>
+        </div>
+
+        <div class="ba-entry">
+            <h3>Lighthouse Wealth</h3>
+            <p class="ba-desc">Wealth-management fintech: onboarding новой RIA требует изменений в шести микросервисах. Генерация configuration PRs с sign-off в Slack.</p>
+            <div class="ba-grid">
+                <figure class="ba-panel before">
+                    <span class="ba-label">Before</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/lighthouse-wealth-before.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/lighthouse-wealth-before.jpg" alt="Lighthouse Wealth: setup panel" loading="lazy"></a>
+                </figure>
+                <figure class="ba-panel after">
+                    <span class="ba-label">After</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/lighthouse-wealth-after.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/lighthouse-wealth-after.jpg" alt="Lighthouse Wealth: FDE recommendation panel" loading="lazy"></a>
+                </figure>
+            </div>
+        </div>
+
+        <div class="ba-entry">
+            <h3>Cascade Health Network</h3>
+            <p class="ba-desc">Проверка reproducibility исследовательского кода. Просится SDK и custom UI, но настоящий gap — внутри review lifecycle, а не в platform.</p>
+            <div class="ba-grid">
+                <figure class="ba-panel before">
+                    <span class="ba-label">Before</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/cascade-before.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/cascade-before.jpg" alt="Cascade Health Network: setup panel" loading="lazy"></a>
+                </figure>
+                <figure class="ba-panel after">
+                    <span class="ba-label">After</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/cascade-after.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/cascade-after.jpg" alt="Cascade Health Network: FDE recommendation panel" loading="lazy"></a>
+                </figure>
+            </div>
+        </div>
+
+        <div class="ba-entry">
+            <h3>Apex Trading</h3>
+            <p class="ba-desc">180 инженеров, universal adoption, три предыдущих engagement, но нет platform-команды и культуры shared tooling.</p>
+            <div class="ba-grid">
+                <figure class="ba-panel before">
+                    <span class="ba-label">Before</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/apex-before.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/apex-before.jpg" alt="Apex Trading: setup panel" loading="lazy"></a>
+                </figure>
+                <figure class="ba-panel after">
+                    <span class="ba-label">After</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/apex-after.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/apex-after.jpg" alt="Apex Trading: FDE recommendation panel" loading="lazy"></a>
+                </figure>
+            </div>
+        </div>
+
+        <div class="ba-entry">
+            <h3>Northstar Logistics — Stage 3</h3>
+            <p class="ba-desc">Шесть месяцев спустя: flaky-test triage в production, два собственных агента от DevEx team. Теперь internal agent platform оправдана.</p>
+            <div class="ba-grid">
+                <figure class="ba-panel before">
+                    <span class="ba-label">Before</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/northstar-platform-before.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/northstar-platform-before.jpg" alt="Northstar Logistics — Stage 3: setup panel" loading="lazy"></a>
+                </figure>
+                <figure class="ba-panel after">
+                    <span class="ba-label">After</span>
+                    <a href="../images/cursor-fde-bootcamp/gallery/northstar-platform-after.jpg" class="img-link"><img src="../images/cursor-fde-bootcamp/gallery/northstar-platform-after.jpg" alt="Northstar Logistics — Stage 3: FDE recommendation panel" loading="lazy"></a>
+                </figure>
+            </div>
+        </div>
+
+    </section>
+
+    <div class="footer">
+        <p>Cursor FDE Bootcamp — Часть 2 | Eugene Burachevskiy</p>
+        <p>AI vs DevOps</p>
+    </div>
+
+</main>
+
+</body>
+</html>
